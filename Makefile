@@ -9,7 +9,7 @@ PG_DATABASE := osm
 
 .PHONY: addresses buildings clean
 
-all: addresses buildings clean
+all: addresses buildings
 
 addresses: shp/addresses.shp
 buildings: shp/buildings.shp
@@ -41,7 +41,7 @@ shp/%.shp:
 	touch $@
 
 shp/addresses.shp: zip/address_point.zip
-shp/buildings.shp: zip/build_p.zip
+shp/buildings.shp: zip/building_footprints_2013.zip
 
 
 # load data into a postgis database
