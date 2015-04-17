@@ -1,9 +1,22 @@
 # This is a Makefile for automatically downloading and preparing data
+#
+# note: you will probably want to change these, depending on your database setup
+#
+PG_HOST := localhost
+PG_USER := osm
+PG_DATABASE := osm
 
-all: buildings addresses
+
+.PHONY: addresses buildings clean
+
+all: addresses buildings clean
 
 addresses: shp/addresses.shp
 buildings: shp/buildings.shp
+
+clean:
+	rm -rf shp/*
+	rm -rf zip/*
 
 
 # download zip files
@@ -27,5 +40,15 @@ shp/%.shp:
 	rmdir $(basename $@)
 	touch $@
 
-shp/buildings.shp: zip/build_p.zip
 shp/addresses.shp: zip/address_point.zip
+shp/buildings.shp: zip/build_p.zip
+
+
+# load data into a postgis database
+load_db: load_addresses load_buildings
+
+load_%: shp/%.shp
+	shp2pgsql -I -s 2277:4326 $< atx_$* | psql --host ${PG_HOST} --user ${PG_USER} ${PG_DATABASE}
+
+load_addresses: shp/addresses.shp
+load_buildings: shp/buildings.shp
