@@ -20,7 +20,7 @@ clean:
 
 
 # download zip files
-zip/build_p.zip:
+zip/building_footprints_2013.zip:
 	mkdir -p $(dir $@)
 	curl 'ftp://ftp.ci.austin.tx.us/GIS-Data/Regional/regional/building_footprints_2013.zip' -o $@.download
 	mv $@.download $@
