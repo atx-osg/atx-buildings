@@ -8,7 +8,7 @@ PG_PASSWORD := osm
 PG_DATABASE := osm
 
 
-.PHONY: addresses buildings clean tiles
+.PHONY: addresses buildings clean json tiles
 
 all: addresses buildings
 
@@ -48,6 +48,12 @@ shp/buildings.shp: zip/building_footprints_2013.zip
 
 
 # convert to geojohnson
+json: json/atx-buildings.json json/addresses.json
+
+json/addresses.json: shp/addresses.shp
+	mkdir -p $(dir $@)
+	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
+
 json/atx-buildings.json: shp/buildings.shp
 	mkdir -p $(dir $@)
 	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
@@ -55,6 +61,7 @@ json/atx-buildings.json: shp/buildings.shp
 json/osm-buildings.json:
 	mkdir -p $(dir $@)
 	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326  $@ PG:"host='${PG_HOST}' user='${PG_USER}' dbname='${PG_DATABASE}' password='${PG_PASSWORD}'" osm_buildings
+
 
 # convert to vector tiles
 tiles: tiles/osm-buildings.mbtiles tiles/atx-buildings.mbtiles
