@@ -12,8 +12,8 @@ PG_DATABASE := osm
 
 all: addresses buildings
 
-addresses: shp/addresses.shp
-buildings: shp/buildings.shp
+addresses: shp/atx-addresses.shp
+buildings: shp/atx-buildings.shp
 
 clean:
 	rm -rf json
@@ -43,18 +43,18 @@ shp/%.shp:
 	rmdir $(basename $@)
 	touch $@
 
-shp/addresses.shp: zip/address_point.zip
-shp/buildings.shp: zip/building_footprints_2013.zip
+shp/atx-addresses.shp: zip/address_point.zip
+shp/atx-buildings.shp: zip/building_footprints_2013.zip
 
 
 # convert to geojohnson
 json: json/atx-buildings.json json/addresses.json
 
-json/addresses.json: shp/addresses.shp
+json/addresses.json: shp/atx-addresses.shp
 	mkdir -p $(dir $@)
 	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
 
-json/atx-buildings.json: shp/buildings.shp
+json/atx-buildings.json: shp/atx-buildings.shp
 	mkdir -p $(dir $@)
 	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
 
@@ -81,5 +81,5 @@ load_db: load_addresses load_buildings
 load_%: shp/%.shp
 	shp2pgsql -I -s 2277:4326 $< atx_$* | psql --host ${PG_HOST} --user ${PG_USER} ${PG_DATABASE}
 
-load_addresses: shp/addresses.shp
-load_buildings: shp/buildings.shp
+load_addresses: shp/atx-addresses.shp
+load_buildings: shp/atx-buildings.shp
