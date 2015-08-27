@@ -16,10 +16,10 @@ addresses: shp/addresses.shp
 buildings: shp/buildings.shp
 
 clean:
-	rm -rf json/*
-	rm -rf shp/*
-	rm -rf tiles/*
-	rm -rf zip/*
+	rm -rf json
+	rm -rf shp
+	rm -rf tiles
+	rm -rf zip
 
 
 # download zip files
