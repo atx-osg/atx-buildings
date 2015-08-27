@@ -25,12 +25,12 @@ clean:
 # download zip files
 zip/building_footprints_2013.zip:
 	mkdir -p $(dir $@)
-	curl 'ftp://ftp.ci.austin.tx.us/GIS-Data/Regional/regional/building_footprints_2013.zip' -o $@.download
+	curl 'https://data.austintexas.gov/api/geospatial/d9te-zi9f?method=export&format=Shapefile' -o $@.download
 	mv $@.download $@
 
 zip/address_point.zip:
 	mkdir -p $(dir $@)
-	curl 'ftp://ftp.ci.austin.tx.us/GIS-Data/Regional/address_points/address_point.zip' -o $@.download
+	curl 'https://data.austintexas.gov/api/geospatial/bpa2-q2tj?method=export&format=Shapefile' -o $@.download
 	mv $@.download $@
 
 
