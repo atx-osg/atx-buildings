@@ -26,6 +26,7 @@ footprints and OSM data and doing some transformations.
 * gdal/ogr
 * PostgreSQL with PostGIS extension
 * tippecanoe (optional - if you want to generate vector tiles)
+* nodejs and npm
 
 
 ### Downloading existing OSM data
@@ -45,7 +46,9 @@ configured:
 
 * `brew install gdal`
 * `brew install postgis`
+* `brew install node`
 * `brew install tippecanoe` (optional)
+* `npm install`
 
 
 ### Making data

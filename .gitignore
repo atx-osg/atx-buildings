@@ -1,4 +1,5 @@
-json/*
-shp/*
-tiles/*
-zip/*
+json/
+node_modules/
+shp/
+tiles/
+zip/

@@ -13,7 +13,7 @@ PG_DATABASE := osm
 all: addresses buildings
 
 addresses: shp/atx-addresses.shp
-buildings: shp/atx-buildings.shp
+buildings: shp/atx-buildings.shp json/osm-buildings.json
 
 clean:
 	rm -rf json
@@ -48,7 +48,7 @@ shp/atx-buildings.shp: zip/building_footprints_2013.zip
 
 
 # convert to geojohnson
-json: json/atx-buildings.json json/addresses.json
+json: json/atx-buildings.json json/addresses.json json/osm-buildings.json
 
 json/addresses.json: shp/atx-addresses.shp
 	mkdir -p $(dir $@)
@@ -58,9 +58,9 @@ json/atx-buildings.json: shp/atx-buildings.shp
 	mkdir -p $(dir $@)
 	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
 
-json/osm-buildings.json:
+json/osm-buildings.json: scripts/osm-buildings.ql
 	mkdir -p $(dir $@)
-	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326  $@ PG:"host='${PG_HOST}' user='${PG_USER}' dbname='${PG_DATABASE}' password='${PG_PASSWORD}'" osm_buildings
+	node_modules/query-overpass/cli.js $< > $@
 
 
 # convert to vector tiles
