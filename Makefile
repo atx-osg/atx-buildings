@@ -14,8 +14,10 @@ all: addresses buildings
 
 addresses: shp/atx-addresses.shp
 buildings: shp/atx-buildings.shp json/osm-buildings.json
+blockgroups: shp/texas-blockgroups.shp
 
 clean:
+	rm -rf gz
 	rm -rf json
 	rm -rf shp
 	rm -rf tiles
@@ -83,3 +85,19 @@ load_%: shp/%.shp
 
 load_addresses: shp/atx-addresses.shp
 load_buildings: shp/atx-buildings.shp
+
+
+# borrowed from https://github.com/mbostock/us-atlas
+# Census Block Groups
+gz/tl_2012_%_bg.zip:
+	mkdir -p $(dir $@)
+	curl 'http://www2.census.gov/geo/tiger/TIGER2012/BG/$(notdir $@)' -o $@.download
+	mv $@.download $@
+
+shp/texas-blockgroups.shp: gz/tl_2012_48_bg.zip
+	rm -rf $(basename $@)
+	mkdir -p $(basename $@)
+	unzip -d $(basename $@) $<
+	for file in $(basename $@)/*; do chmod 644 $$file; mv $$file $(basename $@).$${file##*.}; done
+	rmdir $(basename $@)
+	touch $@
