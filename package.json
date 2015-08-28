@@ -17,9 +17,11 @@
   "homepage": "https://github.com/atx-osg/atx-buildings#readme",
   "dependencies": {
     "JSONStream": "^1.0.4",
+    "babel": "^5.8.23",
     "event-stream": "^3.3.1",
     "geojson-extent": "^0.3.1",
     "minimist": "^1.2.0",
+    "query-overpass": "^1.0.0",
     "rbush": "^1.4.0",
     "turf": "^2.0.2"
   }
