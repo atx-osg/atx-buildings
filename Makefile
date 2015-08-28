@@ -61,6 +61,7 @@ json/osm-buildings.json: scripts/osm-buildings.ql
 
 # convert block groups to GeoJSON, transform to WGS84, and clip to Austin bbox
 json/atx-blockgroups.json: shp/texas-blockgroups.shp
+	mkdir -p $(dir $@)
 	ogr2ogr -f "GeoJSON" -clipdst -98.2 29.9 -97.3 30.7 -t_srs EPSG:4326 $@ $<
 
 json/blockgroups/: json/atx-blockgroups.json
