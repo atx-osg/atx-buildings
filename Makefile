@@ -10,7 +10,7 @@ all: json
 addresses: shp/atx-addresses.shp
 buildings: shp/atx-buildings.shp json/osm-buildings.json
 blockgroups: json/blockgroups
-json: json/coa-buildings.json json/coa-addresses.json json/osm-buildings.json json/blcockgroups
+json: json/coa-buildings.json json/coa-addresses.json json/osm-buildings.json json/blockgroups
 
 
 clean:
