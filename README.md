@@ -27,16 +27,6 @@ footprints and OSM data and doing some transformations.
 * nodejs and npm
 
 
-### Downloading existing OSM data
-
-If you don't have PostGIS set up already, [everything is
-OSM](https://github.com/wilsaj/everything-is-osm) can get you set up quickly and
-with an import of existing OSM data. It imports data from the weekly metro area
-extracts, but we should use the [overpass
-API](http://wiki.openstreetmap.org/wiki/Overpass_API) to get more up-to-date
-data.
-
-
 ### OSX
 
 Steps for installing everything on OSX. Assuming homebrew is installed and
