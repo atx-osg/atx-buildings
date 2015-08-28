@@ -84,3 +84,10 @@ shp/texas-blockgroups.shp: gz/tl_2012_48_bg.zip
 	for file in $(basename $@)/*; do chmod 644 $$file; mv $$file $(basename $@).$${file##*.}; done
 	rmdir $(basename $@)
 	touch $@
+
+
+json/atx-buildings-with-geoid.json: json/atx-blockgroups.json json/atx-buildings.json
+	mkdir -p $(dir $@)
+	cat $(word 2, $^) | \
+		$(BABEL) scripts/uncollect-features.js | \
+		$(BABEL) scripts/spatial-join.js --property GEOID --join $< > $@
