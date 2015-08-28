@@ -9,7 +9,6 @@ import JSONStream from 'JSONStream';
 import minimist from 'minimist';
 import turf from 'turf';
 import rbush from 'rbush';
-import _ from 'lodash';
 
 const argv = minimist(process.argv.slice(2));
 
