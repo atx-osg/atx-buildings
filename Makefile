@@ -47,11 +47,7 @@ shp/coa-buildings.shp: zip/building_footprints_2013.zip
 
 
 # convert CoA shapefiles to geojohnson
-json/shp-addresses.json: shp/coa-addresses.shp
-	mkdir -p $(dir $@)
-	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
-
-json/coa-buildings.json: shp/coa-buildings.shp
+json/coa-%.json: shp/coa-%.shp
 	mkdir -p $(dir $@)
 	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
 
