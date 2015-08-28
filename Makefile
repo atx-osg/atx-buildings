@@ -7,6 +7,8 @@ PG_USER := osm
 PG_PASSWORD := osm
 PG_DATABASE := osm
 
+BABEL = node_modules/babel/bin/babel-node.js
+
 
 .PHONY: addresses buildings clean json tiles
 
@@ -14,7 +16,7 @@ all: addresses buildings
 
 addresses: shp/atx-addresses.shp
 buildings: shp/atx-buildings.shp json/osm-buildings.json
-blockgroups: shp/texas-blockgroups.shp
+blockgroups: json/blockgroups
 
 clean:
 	rm -rf gz
@@ -63,6 +65,16 @@ json/atx-buildings.json: shp/atx-buildings.shp
 json/osm-buildings.json: scripts/osm-buildings.ql
 	mkdir -p $(dir $@)
 	node_modules/query-overpass/cli.js $< > $@
+
+# convert block groups to GeoJSON, transform to WGS84, and clip to Austin bbox
+json/atx-blockgroups.json: shp/texas-blockgroups.shp
+	ogr2ogr -f "GeoJSON" -clipdst -98.2 29.9 -97.3 30.7 -t_srs EPSG:4326 $@ $<
+
+json/blockgroups/: json/atx-blockgroups.json
+	mkdir -p $@
+	cat $^ | \
+		$(BABEL) scripts/uncollect-features.js | \
+		$(BABEL) scripts/write-to-files.js --pre $@/ --propertyName 'GEOID'
 
 
 # convert to vector tiles

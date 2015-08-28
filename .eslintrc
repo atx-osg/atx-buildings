@@ -1,0 +1,16 @@
+---
+parser: babel-eslint
+
+env:
+  browser: true
+  node: true
+
+rules:
+  # ERRORS
+  space-before-blocks: 2
+  indent: [2, 2, indentSwitchCase: true]
+  brace-style: 2
+  space-after-keywords: 2
+  strict: 2
+  comma-dangle: [2, always-multiline]
+  quotes: [2, single, avoid-escape]
