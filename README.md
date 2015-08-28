@@ -24,8 +24,6 @@ footprints and OSM data and doing some transformations.
 * Make
 * curl
 * gdal/ogr
-* PostgreSQL with PostGIS extension
-* tippecanoe (optional - if you want to generate vector tiles)
 * nodejs and npm
 
 
@@ -45,9 +43,7 @@ Steps for installing everything on OSX. Assuming homebrew is installed and
 configured:
 
 * `brew install gdal`
-* `brew install postgis`
 * `brew install node`
-* `brew install tippecanoe` (optional)
 * `npm install`
 
 
@@ -55,11 +51,7 @@ configured:
 
 Then `cd` into this dir and run:
 
-- `make` to download and extract shapefiles
-- `make json` to generate GeoJSON versions of the files
-- `make load_db` to load datasets into PostGIS (see top of the Makefile for
-   where to set database variables like hostname, port, etc)
-- `make tiles` to generate vector tiles
+- `make` to kick off the process of downloading and extracting data
 
 
 ## Work in progress: Alternatives Welcome

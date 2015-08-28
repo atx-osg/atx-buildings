@@ -1,22 +1,17 @@
 # This is a Makefile for automatically downloading and preparing data
-#
-# note: you will probably want to change these, depending on your database setup
-#
-PG_HOST := localhost
-PG_USER := osm
-PG_PASSWORD := osm
-PG_DATABASE := osm
 
 BABEL = node_modules/babel/bin/babel-node.js
 
 
 .PHONY: addresses buildings clean json tiles
 
-all: addresses buildings
+all: json
 
 addresses: shp/atx-addresses.shp
 buildings: shp/atx-buildings.shp json/osm-buildings.json
 blockgroups: json/blockgroups
+json: json/atx-buildings.json json/addresses.json json/osm-buildings.json json/blcockgroups
+
 
 clean:
 	rm -rf gz
@@ -52,8 +47,6 @@ shp/atx-buildings.shp: zip/building_footprints_2013.zip
 
 
 # convert to geojohnson
-json: json/atx-buildings.json json/addresses.json json/osm-buildings.json
-
 json/addresses.json: shp/atx-addresses.shp
 	mkdir -p $(dir $@)
 	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
@@ -75,28 +68,6 @@ json/blockgroups/: json/atx-blockgroups.json
 	cat $^ | \
 		$(BABEL) scripts/uncollect-features.js | \
 		$(BABEL) scripts/write-to-files.js --pre $@/ --propertyName 'GEOID'
-
-
-# convert to vector tiles
-tiles: tiles/osm-buildings.mbtiles tiles/atx-buildings.mbtiles
-
-tiles/atx-buildings.mbtiles: json/atx-buildings.json
-	mkdir -p $(dir $@)
-	tippecanoe -y "BUILDING_F" -y "MAX_HEIGHT" -y "ELEVATION" -y "FEATURE" -o $@ $<
-
-tiles/osm-buildings.mbtiles: json/osm-buildings.json
-	mkdir -p $(dir $@)
-	tippecanoe -o $@ $<
-
-
-# load data into a postgis database
-load_db: load_addresses load_buildings
-
-load_%: shp/%.shp
-	shp2pgsql -I -s 2277:4326 $< atx_$* | psql --host ${PG_HOST} --user ${PG_USER} ${PG_DATABASE}
-
-load_addresses: shp/atx-addresses.shp
-load_buildings: shp/atx-buildings.shp
 
 
 # borrowed from https://github.com/mbostock/us-atlas
