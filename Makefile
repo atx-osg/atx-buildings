@@ -60,10 +60,10 @@ json/osm-buildings.json: scripts/osm-buildings.ql
 	node_modules/query-overpass/cli.js $< > $@
 
 # convert block groups to GeoJSON, transform to WGS84, and clip to Austin bbox
-json/coa-blockgroups.json: shp/texas-blockgroups.shp
+json/atx-blockgroups.json: shp/texas-blockgroups.shp
 	ogr2ogr -f "GeoJSON" -clipdst -98.2 29.9 -97.3 30.7 -t_srs EPSG:4326 $@ $<
 
-json/blockgroups/: json/coa-blockgroups.json
+json/blockgroups/: json/atx-blockgroups.json
 	mkdir -p $@
 	cat $^ | \
 		$(BABEL) scripts/uncollect-features.js | \
@@ -86,7 +86,7 @@ shp/texas-blockgroups.shp: gz/tl_2012_48_bg.zip
 	touch $@
 
 
-json/coa-buildings-with-geoid.json: json/coa-blockgroups.json json/coa-buildings.json
+json/coa-buildings-with-geoid.json: json/atx-blockgroups.json json/coa-buildings.json
 	mkdir -p $(dir $@)
 	cat $(word 2, $^) | \
 		$(BABEL) scripts/uncollect-features.js | \
