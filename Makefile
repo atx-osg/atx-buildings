@@ -64,7 +64,7 @@ json/coa-buildings-with-geoid.json: json/atx-blockgroups.json json/coa-buildings
 # clean up properties and tags
 json/coa-buildings-osm-ready.json: json/coa-buildings-with-geoid.json
 	mkdir -p $(dir $@)
-	cat $< | head -20000 | \
+	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"FEATURE": "Structure"}' | \
 		$(BABEL) scripts/add-properties.js '{"building": "yes"}' | \
 		$(BABEL) scripts/height-conversions.js | \
