@@ -20,6 +20,8 @@
     "babel": "^5.8.23",
     "event-stream": "^3.3.1",
     "geojson-extent": "^0.3.1",
+    "lodash.merge": "^3.3.2",
+    "lodash.pick": "^3.1.0",
     "minimist": "^1.2.0",
     "query-overpass": "^1.0.0",
     "rbush": "^1.4.0",

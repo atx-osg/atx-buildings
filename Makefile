@@ -1,6 +1,6 @@
 # This is a Makefile for automatically downloading and preparing data
 
-BABEL = node_modules/babel/bin/babel-node.js
+BABEL := node_modules/babel/bin/babel-node.js
 
 
 .PHONY: addresses buildings clean json tiles
@@ -52,6 +52,24 @@ json/coa-%.json: shp/coa-%.shp
 	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
 
 # download osm buildings via overpass API
+	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
+
+# add census block group id (GEOID) to each coa building feature
+json/coa-buildings-with-geoid.json: json/atx-blockgroups.json json/coa-buildings.json
+	mkdir -p $(dir $@)
+	cat $(word 2, $^) | \
+		$(BABEL) scripts/uncollect-features.js | \
+		$(BABEL) scripts/spatial-join.js --property GEOID --join $< > $@
+
+# clean up properties and tags
+json/coa-buildings-osm-ready.json: json/coa-buildings-with-geoid.json
+	mkdir -p $(dir $@)
+	cat $< | head -20000 | \
+		$(BABEL) scripts/match-properties.js '{"FEATURE": "Structure"}' | \
+		$(BABEL) scripts/add-properties.js '{"building": "yes"}' | \
+		$(BABEL) scripts/height-conversions.js | \
+		$(BABEL) scripts/pick-properties.js '["GEOID", "height", "building"]' > $@
+
 json/osm-buildings.json: scripts/osm-buildings.ql
 	mkdir -p $(dir $@)
 	node_modules/query-overpass/cli.js $< > $@
@@ -67,13 +85,6 @@ json/blockgroups/: json/atx-blockgroups.json
 	cat $^ | \
 		$(BABEL) scripts/uncollect-features.js | \
 		$(BABEL) scripts/write-to-files.js --pre $@/ --propertyName 'GEOID'
-
-# add census block group id (GEOID) to each coa building feature
-json/coa-buildings-with-geoid.json: json/atx-blockgroups.json json/coa-buildings.json
-	mkdir -p $(dir $@)
-	cat $(word 2, $^) | \
-		$(BABEL) scripts/uncollect-features.js | \
-		$(BABEL) scripts/spatial-join.js --property GEOID --join $< > $@
 
 
 # this part taken from https://github.com/mbostock/us-atlas
