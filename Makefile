@@ -93,6 +93,7 @@ json/blockgroups/%-buildings.json: json/blockgroups/%-buildings-raw.json
 		$(BABEL) scripts/add-properties.js '{"building": "yes"}' | \
 		$(BABEL) scripts/height-conversions.js | \
 		$(BABEL) scripts/pick-properties.js '["height", "building"]' | \
+		$(BABEL) scripts/simplify-geometries.js --tolerance 0.000001 | \
 		$(BABEL) scripts/collect-features.js > $@
 
 # write out all the raw CoA building features in a blockgroup
