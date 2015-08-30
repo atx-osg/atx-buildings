@@ -71,20 +71,33 @@ json/blockgroups/%-blockgroup.json: json/atx-blockgroups.json
 		$(BABEL) scripts/uncollect-features.js | \
 		grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))' > $@
 
-# write out all the buildings in a blockgroup
-json/blockgroups/%-buildings.json: json/coa-buildings-with-geoid.json
+# process the blockgroup buildings for OSM
+json/blockgroups/%-buildings.json: json/blockgroups/%-buildings-raw.json
 	mkdir -p $(dir $@)
-	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< | \
+	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"FEATURE": "Structure"}' | \
 		$(BABEL) scripts/add-properties.js '{"building": "yes"}' | \
 		$(BABEL) scripts/height-conversions.js | \
 		$(BABEL) scripts/pick-properties.js '["height", "building"]' | \
 		$(BABEL) scripts/collect-features.js > $@
 
+# write out all the raw CoA building features in a blockgroup
+json/blockgroups/%-buildings-raw.json: json/coa-buildings-with-geoid.json
+	mkdir -p $(dir $@)
+	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< > $@
+
 # download osm buildings via overpass API
 json/osm-buildings.json: scripts/osm-buildings.ql
 	mkdir -p $(dir $@)
 	node_modules/query-overpass/cli.js $< > $@
+
+
+# convert to buildings to OSM XML
+xml/%-buildings.xml: json/blockgroups/%-buildings.json
+	mkdir -p $(dir $@)
+	cat $< | \
+		$(BABEL) scripts/geojson-to-osm.js > $@
+
 
 # this part taken from https://github.com/mbostock/us-atlas
 # download Census Block Groups
@@ -104,7 +117,7 @@ shp/texas-blockgroups.shp: gz/tl_2012_48_bg.zip
 
 
 # define all the relevant blockgroups
-blockgroup-%: json/blockgroups/%-buildings.json json/blockgroups/%-blockgroup.json
+blockgroup-%: json/blockgroups/%-buildings.json json/blockgroups/%-blockgroup.json xml/%-buildings.xml
 	true
 
 
