@@ -46,6 +46,11 @@ shp/%.shp:
 shp/coa-addresses.shp: zip/address_point.zip
 shp/coa-buildings.shp: zip/building_footprints_2013.zip
 
+# add a way of generating coa buildings dataset with census block GEOID for
+# making a pretty map
+shp/coa-buildings-with-geoid.shp: json/coa-buildings-with-geoid-collected.json
+	ogr2ogr -f "ESRI Shapefile" -dim 2 -t_srs EPSG:4326 $@ $<
+
 
 # convert block groups to GeoJSON, transform to WGS84, and clip to Austin bbox
 json/atx-blockgroups.json: shp/texas-blockgroups.shp
@@ -63,6 +68,15 @@ json/coa-buildings-with-geoid.json: json/atx-blockgroups.json json/coa-buildings
 	cat $(word 2, $^) | \
 		$(BABEL) scripts/uncollect-features.js | \
 		$(BABEL) scripts/spatial-join.js --property GEOID --join $< > $@
+
+# collect GEOID'd buildings into a FeatureCollection
+json/coa-buildings-with-geoid-collected.json: json/coa-buildings-with-geoid.json
+	mkdir -p $(dir $@)
+	echo '{"type": "FeatureCollection", "features": [' > $@
+	cat $< | \
+		sed 's/$$/,/' >> $@
+	sed -i '' '$$ s/.$$//' $@
+	echo '\n]}' >> $@
 
 # write out the census blockgroup poly to a file
 json/blockgroups/%-blockgroup.json: json/atx-blockgroups.json
