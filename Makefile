@@ -47,7 +47,7 @@ shp/coa-addresses.shp: zip/address_point.zip
 shp/coa-buildings.shp: zip/building_footprints_2013.zip
 
 # add a way of generating coa buildings dataset with census block GEOID for
-# making a pretty map
+# visualization purposes
 shp/coa-buildings-with-geoid.shp: json/coa-buildings-with-geoid-collected.json
 	ogr2ogr -f "ESRI Shapefile" -dim 2 -t_srs EPSG:4326 $@ $<
 
