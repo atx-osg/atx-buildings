@@ -62,13 +62,15 @@ json/coa-buildings-with-geoid.json: json/atx-blockgroups.json json/coa-buildings
 		$(BABEL) scripts/spatial-join.js --property GEOID --join $< > $@
 
 # clean up properties and tags
-json/coa-buildings-osm-ready.json: json/coa-buildings-with-geoid.json
-	mkdir -p $(dir $@)
+json/blockgroup-buildings/: json/coa-buildings-with-geoid.json
+	mkdir -p $@
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"FEATURE": "Structure"}' | \
 		$(BABEL) scripts/add-properties.js '{"building": "yes"}' | \
 		$(BABEL) scripts/height-conversions.js | \
-		$(BABEL) scripts/pick-properties.js '["GEOID", "height", "building"]' > $@
+		$(BABEL) scripts/pick-properties.js '["GEOID", "height", "building"]' | \
+		$(BABEL) scripts/group-by-property.js --propertyName 'GEOID' --drop | \
+		$(BABEL) scripts/write-to-files.js --pre $@/ --propertyName 'GEOID' --drop --clean
 
 json/osm-buildings.json: scripts/osm-buildings.ql
 	mkdir -p $(dir $@)
