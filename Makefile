@@ -6,11 +6,10 @@ BABEL := node_modules/babel/bin/babel-node.js
 .PHONY: addresses buildings clean json tiles blockgroup-%
 .SECONDARY:
 
-all: json
+all: blockgroups
 
 addresses: shp/atx-addresses.shp
 buildings: shp/atx-buildings.shp json/osm-buildings.json
-blockgroups: json/blockgroups
 json: json/coa-buildings.json json/coa-addresses.json json/osm-buildings.json json/blockgroups
 
 
