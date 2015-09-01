@@ -45,11 +45,13 @@ shp/%.shp:
 shp/coa-addresses.shp: zip/address_point.zip
 shp/coa-buildings.shp: zip/building_footprints_2013.zip
 
-# add a way of generating shapefile of coa buildings dataset with census block
-# GEOID for visualization purposes
+# add a way of generating shapefile of coa datasets with census block GEOID for
+# visualization purposes
 shp/coa-buildings-with-geoid.shp: json/coa-buildings-with-geoid-collected.json
 	ogr2ogr -f "ESRI Shapefile" -dim 2 -t_srs EPSG:4326 $@ $<
 
+shp/coa-addresses-with-geoid.shp: json/coa-addresses-with-geoid-collected.json
+	ogr2ogr -f "ESRI Shapefile" -dim 2 -t_srs EPSG:4326 $@ $<
 
 # convert block groups to GeoJSON, transform to WGS84, and clip to Austin bbox
 json/atx-blockgroups.json: shp/texas-blockgroups.shp
@@ -57,19 +59,23 @@ json/atx-blockgroups.json: shp/texas-blockgroups.shp
 	ogr2ogr -f "GeoJSON" -clipdst -98.2 29.9 -97.3 30.7 -t_srs EPSG:4326 $@ $<
 
 # convert CoA shapefiles to geojohnson
-json/coa-%.json: shp/coa-%.shp
+json/coa-buildings.json: shp/coa-buildings.shp
 	mkdir -p $(dir $@)
 	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
 
-# add census block group id (GEOID) to each coa building feature
-json/coa-buildings-with-geoid.json: json/atx-blockgroups.json json/coa-buildings.json
+json/coa-addresses.json: shp/coa-addresses.shp
+	mkdir -p $(dir $@)
+	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
+
+# add census block group id (GEOID) to each CoA feature
+json/coa-%-with-geoid.json: json/atx-blockgroups.json json/coa-%.json
 	mkdir -p $(dir $@)
 	cat $(word 2, $^) | \
 		$(BABEL) scripts/uncollect-features.js | \
 		$(BABEL) scripts/spatial-join.js --property GEOID --join $< > $@
 
 # collect GEOID'd buildings into a FeatureCollection
-json/coa-buildings-with-geoid-collected.json: json/coa-buildings-with-geoid.json
+json/coa-%-with-geoid-collected.json: json/coa-%-with-geoid.json
 	mkdir -p $(dir $@)
 	echo '{"type": "FeatureCollection", "features": [' > $@
 	cat $< | \
@@ -95,8 +101,22 @@ json/blockgroups/%-buildings.json: json/blockgroups/%-buildings-raw.json
 		$(BABEL) scripts/simplify-geometries.js --tolerance 0.0000015 | \
 		$(BABEL) scripts/collect-features.js > $@
 
-# write out all the raw CoA building features in a blockgroup
+# process the blockgroup addresses for OSM
+json/blockgroups/%-addresses.json: json/blockgroups/%-addresses-raw.json
+	mkdir -p $(dir $@)
+	cat $< | \
+		$(BABEL) scripts/match-properties.js '{"ADDRESS_TY": 1}' | \
+		$(BABEL) scripts/add-properties.js '{"addr:country": "US", "addr:state": "TX"}' | \
+		$(BABEL) scripts/pick-properties.js '["addr:country", "addr:state", "addr:street", "addr:housenumber"]' | \
+		$(BABEL) scripts/collect-features.js > $@
+
+# write out all the raw CoA building features that are in a blockgroup
 json/blockgroups/%-buildings-raw.json: json/coa-buildings-with-geoid.json
+	mkdir -p $(dir $@)
+	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< > $@
+
+# write out all the raw CoA address points that are in a blockgroup
+json/blockgroups/%-addresses-raw.json: json/coa-addresses-with-geoid.json
 	mkdir -p $(dir $@)
 	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< > $@
 
@@ -131,7 +151,11 @@ shp/texas-blockgroups.shp: gz/tl_2012_48_bg.zip
 
 
 # define all the relevant blockgroups
-blockgroup-%: json/blockgroups/%-buildings.json json/blockgroups/%-blockgroup.json xml/%-buildings.xml
+blockgroup-%: \
+		json/blockgroups/%-buildings.json \
+		json/blockgroups/%-addresses.json \
+		json/blockgroups/%-blockgroup.json \
+		xml/%-buildings.xml
 	true
 
 
