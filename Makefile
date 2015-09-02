@@ -126,9 +126,8 @@ json/osm-buildings.json: scripts/osm-buildings.ql
 	mkdir -p $(dir $@)
 	node_modules/query-overpass/cli.js $< > $@
 
-
-# convert to buildings to OSM XML
-xml/%-buildings.xml: json/blockgroups/%-buildings.json
+# convert to processed features to OSM XML
+xml/%.xml: json/blockgroups/%.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/geojson-to-osm.js > $@
@@ -156,7 +155,8 @@ blockgroup-%: \
 		json/blockgroups/%-buildings.json \
 		json/blockgroups/%-addresses.json \
 		json/blockgroups/%-blockgroup.json \
-		xml/%-buildings.xml
+		xml/%-buildings.xml \
+		xml/%-addresses.xml
 	true
 
 
