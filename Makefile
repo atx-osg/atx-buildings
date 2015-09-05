@@ -111,6 +111,16 @@ json/blockgroups/%-addresses.json: json/blockgroups/%-addresses-raw.json
 		$(BABEL) scripts/pick-properties.js '["addr:country", "addr:state", "addr:street", "addr:housenumber"]' | \
 		$(BABEL) scripts/collect-features.js > $@
 
+# download OSM streets for a blockgroup
+json/blockgroups/%-streets.json: json/blockgroups/%-blockgroup.json
+	mkdir -p $(dir $@)
+	ogrinfo -al $< | \
+		grep Extent | \
+		sed 's/) - (/ /' | \
+		sed 's/[(),]/ /g' | \
+		awk '{print "\"",$$3,",",$$2,",",$$5,",",$$4,"\""}' | \
+		xargs $(BABEL) scripts/get-osm-features.js --type highway --bbox > $@
+
 # write out all the raw CoA building features that are in a blockgroup
 json/blockgroups/%-buildings-raw.json: json/coa-buildings-with-geoid.json
 	mkdir -p $(dir $@)
@@ -152,9 +162,10 @@ shp/texas-blockgroups.shp: gz/tl_2012_48_bg.zip
 
 # define all the relevant blockgroups
 blockgroup-%: \
-		json/blockgroups/%-buildings.json \
 		json/blockgroups/%-addresses.json \
 		json/blockgroups/%-blockgroup.json \
+		json/blockgroups/%-buildings.json \
+		json/blockgroups/%-streets.json \
 		xml/%-buildings.xml \
 		xml/%-addresses.xml
 	true
