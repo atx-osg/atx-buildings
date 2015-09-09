@@ -136,6 +136,15 @@ json/osm-buildings.json: scripts/osm-buildings.ql
 	mkdir -p $(dir $@)
 	node_modules/query-overpass/cli.js $< > $@
 
+# extract streetnames
+txt/blockgroups/%-streetnames.txt:  json/blockgroups/%-streets.json
+	mkdir -p $(dir $@)
+	cat $< | \
+		$(BABEL) scripts/uncollect-features.js | \
+		$(BABEL) scripts/extract-names.js | \
+		sort | \
+		uniq > $@
+
 # convert to processed features to OSM XML
 xml/%.xml: json/blockgroups/%.json
 	mkdir -p $(dir $@)
