@@ -102,12 +102,12 @@ json/blockgroups/%-buildings.json: json/blockgroups/%-buildings-raw.json
 		$(BABEL) scripts/collect-features.js > $@
 
 # process the blockgroup addresses for OSM
-json/blockgroups/%-addresses.json: json/blockgroups/%-addresses-raw.json
+json/blockgroups/%-addresses.json: json/blockgroups/%-addresses-raw.json txt/blockgroups/%-streetnames.txt
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"ADDRESS_TY": 1}' | \
 		$(BABEL) scripts/add-properties.js '{"addr:country": "US", "addr:state": "TX"}' | \
-		$(BABEL) scripts/convert-addresses.js | \
+		$(BABEL) scripts/convert-addresses.js --names $(word 2, $^) | \
 		$(BABEL) scripts/pick-properties.js '["addr:country", "addr:state", "addr:street", "addr:housenumber"]' | \
 		$(BABEL) scripts/collect-features.js > $@
 
