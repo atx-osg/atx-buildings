@@ -72,18 +72,26 @@ function bestMatch(address, names) {
   names.forEach((name) => {
     let score = 0;
 
+    // test if address.STREET_NAM is in OSM street name
+    // (eg. "KOENIG" matches "Koenig Lane")
     if (_.includes(name.toLowerCase(), streetName)) {
       score += 1000;
     }
 
+    // test if normalized address.STREET_TYP is in OSM street name
+    // (eg. "LN" matches "Koenig Lane")
     if(mapTest(name, streetTypes, streetType, _.contains)) {
       score += 100;
     }
 
+    // test if normalized address.PREFIX_DIR is at start of OSM street name
+    // (eg. "E" matches "East Sixth Street")
     if(mapTest(name, directions, prefixDirection, _.startsWith)) {
       score += 10;
     }
 
+    // test if normalized address.SUFFIX_DR is at start of OSM street name
+    // (eg. "SB" matches "I 35 Southbound")
     if(mapTest(name, directions, suffixDirection, _.endsWith)) {
       score += 1;
     }
