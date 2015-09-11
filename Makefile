@@ -129,7 +129,7 @@ json/blockgroups/%-buildings-raw.json: json/coa-buildings-with-geoid.json
 # write out all the raw CoA address points that are in a blockgroup
 json/blockgroups/%-addresses-raw.json: json/coa-addresses-with-geoid.json
 	mkdir -p $(dir $@)
-	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< > $@
+	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< > $@ | true
 
 # download osm buildings via overpass API
 json/osm-buildings.json: scripts/osm-buildings.ql
