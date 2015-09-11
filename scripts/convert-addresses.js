@@ -11,6 +11,8 @@ const argv = minimist(process.argv.slice(2));
 
 const namesPath = argv['names'];
 
+// street type abbreviations found in STREET_TYP field, along with expanded
+// versions to test for in OSM street names
 const streetTypes = {
   'av': ['avenue'],
   'ave': ['avenue'],
@@ -24,6 +26,8 @@ const streetTypes = {
   'pl': ['place'],
 }
 
+// direction abbreviations found in SUFFIX_DIR and PREFIX_DIR, along with
+// expanded versions to test for in OSM street names
 const directions = {
   'n': ['north'],
   'nb': ['northbound', 'north bound', 'north'],
@@ -43,6 +47,11 @@ const directions = {
   'nwb': ['northwestbound', 'northwest bound', 'northwest'],
 }
 
+// common abbreviations found in STREETNAM that should be expanded when
+// comparing to OSM names
+const expansions = {
+  'st': ['saint']
+}
 
 function mapTest(name, map, item, func) {
   const mapped = map[item];
@@ -59,13 +68,47 @@ function mapTest(name, map, item, func) {
   return false;
 }
 
+function normalize(str) {
+  return str.toLowerCase().replace(/['\.-]/g, '');
+}
+
+function expansionPossibilities(name) {
+  let possibilities = [name];
+  const normed = normalize(name);
+
+  _.pairs(expansions).forEach(([abbreviation, expansionList]) => {
+    expansionList.forEach((expansion) => {
+      const index = normed.split(' ').indexOf(abbreviation);
+      if (index !== -1) {
+        let copy = _.cloneDeep(normed).split(' ');
+        copy[index] = expansion;
+        possibilities.push(copy.join(' '));
+      }
+    })
+  });
+
+  return possibilities;
+}
+
+function matchStreet(name, streetName) {
+  const possibilities = expansionPossibilities(streetName);
+
+  for (var i = 0, len = possibilities.length; i < len; i++) {
+    const possibility = possibilities[i];
+    if (_.includes(normalize(name), normalize(possibility))) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // find best match for address in an array of OSM names
 function bestMatch(address, names) {
-  const prefixDirection = address['PREFIX_DIR'] && address['PREFIX_DIR'].toLowerCase();
-  const prefixType = address['PRE_TYPE'] && address['PRE_TYPE'].toLowerCase();
-  const streetName = address['STREET_NAM'] && address['STREET_NAM'].toLowerCase();
-  const streetType = address['STREET_TYP'] && address['STREET_TYP'].toLowerCase();
-  const suffixDirection = address['SUFFIX_DIR'] && address['SUFFIX_DIR'].toLowerCase();
+  const prefixDirection = address['PREFIX_DIR'] && normalize(address['PREFIX_DIR']);
+  const prefixType = address['PRE_TYPE'] && normalize(address['PRE_TYPE']);
+  const streetName = address['STREET_NAM'] && normalize(address['STREET_NAM']);
+  const streetType = address['STREET_TYP'] && normalize(address['STREET_TYP']);
+  const suffixDirection = address['SUFFIX_DIR'] && normalize(address['SUFFIX_DIR']);
 
   let scores = {};
 
@@ -74,7 +117,8 @@ function bestMatch(address, names) {
 
     // test if address.STREET_NAM is in OSM street name
     // (eg. "KOENIG" matches "Koenig Lane")
-    if (_.includes(name.toLowerCase(), streetName)) {
+    if (matchStreet(name, streetName)) {
+      matchStreet(name, streetName);
       score += 1000;
     }
 
@@ -102,21 +146,25 @@ function bestMatch(address, names) {
   const sorted = _.sortBy(_.pairs(scores), ([name, score]) => -1 * score);
   if (sorted.length && sorted[0][1] > 1000) {
     if (sorted[0][1] !== sorted[1][1]) {
-      console.error(`winner: ${sorted[0]}`);
       return sorted[0][0];
     } else {
       const tied = sorted.filter((pair) => pair[1] === sorted[0][1]);
-      console.error(`tie: ${tied.join(' | ')}`);
+      const shortest = _.sortBy(tied, (name) => -1 * name.length)[0];
+      return shortest;
     }
+  } else {
+    console.error(`skipping, could not match: ${streetName}`);
   }
 }
 
 
 fs.createReadStream(namesPath)
   .pipe(es.split())
-  .pipe(es.writeArray((err, names) => {
-    //process.stdin
-    fs.createReadStream('json/blockgroups/484530015034-addresses-raw.json')
+  .pipe(es.writeArray((err, allNames) => {
+    // filter out empty string, if any
+    const names = allNames.filter((name) => name.length);
+
+    process.stdin
       .pipe(JSONStream.parse())
       .pipe(es.map(function(feature, cb) {
         const props = feature.properties;
