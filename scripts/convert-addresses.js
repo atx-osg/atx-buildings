@@ -1,5 +1,6 @@
 // stream in CoA GeoJSON address point features and stream out point features
 // with OSM address tags properly set
+'use strict';
 
 import es from 'event-stream';
 import fs from 'fs';
@@ -9,7 +10,7 @@ import _ from 'lodash';
 
 const argv = minimist(process.argv.slice(2));
 
-const namesPath = argv['names'];
+const namesPath = argv.names;
 
 // street type abbreviations found in STREET_TYP field, along with expanded
 // versions to test for in OSM street names
@@ -24,7 +25,7 @@ const streetTypes = {
   'st': ['street'],
   'svrd': ['frontage road', 'service road'],
   'pl': ['place'],
-}
+};
 
 // direction abbreviations found in SUFFIX_DIR and PREFIX_DIR, along with
 // expanded versions to test for in OSM street names
@@ -45,19 +46,19 @@ const directions = {
   'wb': ['westbound', 'west bound', 'west'],
   'nw': ['northwest'],
   'nwb': ['northwestbound', 'northwest bound', 'northwest'],
-}
+};
 
 // common abbreviations found in STREETNAM that should be expanded when
 // comparing to OSM names
 const expansions = {
-  'st': ['saint']
-}
+  'st': ['saint'],
+};
 
 function mapTest(name, map, item, func) {
   const mapped = map[item];
   if (mapped) {
     for (var i = 0, len = mapped.length; i < len; i++) {
-      if(func(name.toLowerCase(), mapped[i])) {
+      if (func(name.toLowerCase(), mapped[i])) {
         return true;
       }
     }
@@ -84,7 +85,7 @@ function expansionPossibilities(name) {
         copy[index] = expansion;
         possibilities.push(copy.join(' '));
       }
-    })
+    });
   });
 
   return possibilities;
@@ -124,19 +125,19 @@ function bestMatch(address, names) {
 
     // test if normalized address.STREET_TYP is in OSM street name
     // (eg. "LN" matches "Koenig Lane")
-    if(mapTest(name, streetTypes, streetType, _.contains)) {
+    if (mapTest(name, streetTypes, streetType, _.contains)) {
       score += 100;
     }
 
     // test if normalized address.PREFIX_DIR is at start of OSM street name
     // (eg. "E" matches "East Sixth Street")
-    if(mapTest(name, directions, prefixDirection, _.startsWith)) {
+    if (mapTest(name, directions, prefixDirection, _.startsWith)) {
       score += 10;
     }
 
     // test if normalized address.SUFFIX_DR is at start of OSM street name
     // (eg. "SB" matches "I 35 Southbound")
-    if(mapTest(name, directions, suffixDirection, _.endsWith)) {
+    if (mapTest(name, directions, suffixDirection, _.endsWith)) {
       score += 1;
     }
 
