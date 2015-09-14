@@ -184,7 +184,7 @@ function bestMatch(address, names) {
       return shortest;
     }
   } else {
-    console.error(`skipping, could not match: ${streetName}`);
+    console.error(`skipping CoA address, could not match street name: ${streetName}`);
   }
 }
 
