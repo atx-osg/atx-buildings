@@ -37,22 +37,11 @@ class Index {
     // spatially intersects
     for (var i = 0, len = matches.length; i < len; i++) {
       const match = matches[i];
-      if (intersects(feature.geometry, match[4].feature.geometry)) {
+      const intersection = turf.intersect(feature.geometry, match[4].feature.geometry);
+      if (intersection !== undefined) {
         return match[4].feature;
       }
     }
-  }
-}
-
-
-// returns true if poly1 intersects poly2, else false
-function intersects (poly1, poly2) {
-  try {
-    var intersection = turf.intersect(poly1, poly2);
-    return intersection !== undefined;
-  } catch (err) {
-    console.error(err);
-    return true;
   }
 }
 
@@ -78,4 +67,3 @@ fs.createReadStream(joinFeaturesPath)
         console.log(err);
       });
   }));
-

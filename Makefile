@@ -107,7 +107,7 @@ json/blockgroups/%-addresses.json: json/blockgroups/%-addresses-raw.json txt/blo
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"ADDRESS_TY": 1}' | \
 		$(BABEL) scripts/add-properties.js '{"addr:country": "US", "addr:state": "TX"}' | \
-		$(BABEL) scripts/convert-addresses.js --names $(word 2, $^) | \
+		$(BABEL) scripts/convert-addresses.js --names $(word 2, $^) 2> $@.errors.log | \
 		$(BABEL) scripts/pick-properties.js '["addr:country", "addr:state", "addr:street", "addr:housenumber"]' | \
 		$(BABEL) scripts/collect-features.js > $@
 
@@ -129,7 +129,7 @@ json/blockgroups/%-buildings-raw.json: json/coa-buildings-with-geoid.json
 # write out all the raw CoA address points that are in a blockgroup
 json/blockgroups/%-addresses-raw.json: json/coa-addresses-with-geoid.json
 	mkdir -p $(dir $@)
-	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< > $@
+	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< > $@ | true
 
 # download osm buildings via overpass API
 json/osm-buildings.json: scripts/osm-buildings.ql
