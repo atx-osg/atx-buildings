@@ -5,12 +5,12 @@ This repo is a central place to keep code and scripts for our project to import
 the building footprint and address point datasets from the City of Austin into
 OpenStreetMap.
 
-Our planning and data documentation is at the [OSM wiki
+Our planning and import documentation is at the [OSM wiki
 page](https://wiki.openstreetmap.org/wiki/Austin,_TX/Buildings_Import)
 
-All levels of OSM / geo experience are welcome. There's plenty of stuff to do
-and we'll have time to learn whatever we need to along the way, so please join
-us.
+If you just want to work on importing data, see the wiki for info on how that
+works. This repo and the instructions below are just for setting up and
+running the data processing scripts to prepare for the import. 
 
 
 ## Getting set up
@@ -42,10 +42,3 @@ configured:
 Then `cd` into this dir and run:
 
 - `make` to kick off the process of downloading and extracting data
-
-
-## Work in progress: Alternatives Welcome
-
-We're still in exploration phase with regard to tools and such. Do you use
-something else for automating data workflows? Add it to the repo so we can
-compare!
