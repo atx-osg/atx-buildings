@@ -58,6 +58,12 @@ json/atx-blockgroups.json: shp/texas-blockgroups.shp
 	mkdir -p $(dir $@)
 	ogr2ogr -f "GeoJSON" -clipdst -98.2 29.9 -97.3 30.7 -t_srs EPSG:4326 $@ $<
 
+json/atx-blockgroups-matching.json: blockgroups
+	mkdir -p $(dir $@)
+	cat json/blockgroups/*-blockgroup.json | \
+		$(BABEL) scripts/simplify-geometries.js --tolerance 0.0009 | \
+		$(BABEL) scripts/collect-features.js > $@
+
 # convert CoA shapefiles to geojohnson
 json/coa-buildings.json: shp/coa-buildings.shp
 	mkdir -p $(dir $@)
