@@ -1,6 +1,8 @@
 # This is a Makefile for automatically downloading and preparing data
 
 BABEL := node_modules/babel/bin/babel-node.js
+USERNAME_FILE := ./secrets/osm-username
+PASSWORD_FILE := ./secrets/osm-password
 
 
 .PHONY: addresses buildings clean json tiles blockgroups blockgroup-%
@@ -215,6 +217,15 @@ shp/texas-blockgroups.shp: gz/tl_2012_48_bg.zip
 	for file in $(basename $@)/*; do chmod 644 $$file; mv $$file $(basename $@).$${file##*.}; done
 	rmdir $(basename $@)
 	touch $@
+
+
+json/atx-blockgroups-matching-1.json: json/atx-blockgroups-matching.json
+	cat $< | \
+		$(BABEL) scripts/uncollect-features.js | \
+		head -1 > $@
+
+upload-task-links: json/atx-blockgroups-matching-1.json
+	$(BABEL) debug scripts/upload-task-manager-comment-links.js --task-manager tasks.openstreetmap.us --project 4 --username `cat ${USERNAME_FILE}` --password `cat ${PASSWORD_FILE}` $<
 
 
 # define all the relevant blockgroups
