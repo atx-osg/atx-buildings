@@ -63,6 +63,8 @@ json/atx-blockgroups-matching.json: blockgroups
 	mkdir -p $(dir $@)
 	cat json/blockgroups/*/blockgroup.json | \
 		$(BABEL) scripts/simplify-geometries.js --tolerance 0.0009 | \
+		$(BABEL) scripts/add-import-properties.js | \
+		$(BABEL) scripts/pick-properties.js '["import_url"]' | \
 		$(BABEL) scripts/collect-features.js > $@
 
 # convert CoA buildings to geojson
