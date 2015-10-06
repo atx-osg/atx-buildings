@@ -29,6 +29,7 @@
     "query-overpass": "^1.0.0",
     "rbush": "^1.4.0",
     "request": "^2.64.0",
-    "turf": "^2.0.2"
+    "turf": "^2.0.2",
+    "turf-difference": "^2.0.0"
   }
 }
