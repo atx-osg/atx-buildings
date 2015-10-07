@@ -89,6 +89,18 @@ json/coa-%-with-geoid-collected.json: json/coa-%-with-geoid.json
 	sed -i '' '$$ s/.$$//' $@
 	echo '\n]}' >> $@
 
+# add census block group id (GEOID) to each existing OSM building
+json/osm-buildings-uncollected.json: json/osm-buildings.json
+	mkdir -p $(dir $@)
+	cat $< | \
+		$(BABEL) scripts/uncollect-features.js > $@
+
+json/osm-buildings-with-geoid.json: json/atx-blockgroups.json json/osm-buildings-uncollected.json
+	mkdir -p $(dir $@)
+	cat $(word 2, $^) | \
+		$(BABEL) scripts/uncollect-features.js | \
+		$(BABEL) scripts/spatial-join.js --property GEOID --join $< > $@
+
 # write out the census blockgroup poly to a file
 json/blockgroups/%-blockgroup.json: json/atx-blockgroups.json
 	mkdir -p $(dir $@)
@@ -97,10 +109,11 @@ json/blockgroups/%-blockgroup.json: json/atx-blockgroups.json
 		grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))' > $@
 
 # process the blockgroup buildings for OSM
-json/blockgroups/%-buildings.json: json/blockgroups/%-buildings-raw.json
+json/blockgroups/%-buildings.json: json/blockgroups/%-buildings-raw.json json/blockgroups/%-buildings-osm.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"FEATURE": "Structure"}' | \
+		$(BABEL) scripts/spatial-filter.js --join $(word 2, $^) | \
 		$(BABEL) scripts/add-properties.js '{"building": "yes"}' | \
 		$(BABEL) scripts/height-conversions.js | \
 		$(BABEL) scripts/pick-properties.js '["height", "building"]' | \
@@ -128,6 +141,11 @@ json/blockgroups/%-streets.json: json/blockgroups/%-blockgroup.json
 
 # write out all the raw CoA building features that are in a blockgroup
 json/blockgroups/%-buildings-raw.json: json/coa-buildings-with-geoid.json
+	mkdir -p $(dir $@)
+	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< > $@
+
+# write out all the OSM building features that are in a blockgroup
+json/blockgroups/%-buildings-osm.json: json/osm-buildings-with-geoid.json
 	mkdir -p $(dir $@)
 	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< > $@
 
