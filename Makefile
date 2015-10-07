@@ -224,7 +224,7 @@ json/atx-blockgroups-matching-1.json: json/atx-blockgroups-matching.json
 		$(BABEL) scripts/uncollect-features.js | \
 		head -1 > $@
 
-upload-task-links: json/atx-blockgroups-matching-1.json
+upload-task-links: json/atx-blockgroups-matching.json
 	$(BABEL) debug scripts/upload-task-manager-comment-links.js --task-manager tasks.openstreetmap.us --project 4 --username `cat ${USERNAME_FILE}` --password `cat ${PASSWORD_FILE}` $<
 
 

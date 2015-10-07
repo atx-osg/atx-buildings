@@ -34,7 +34,6 @@ const projectLink = `${taskManagerUrl}/project/${projectNumber}`;
 const tasksUrl = `${projectLink}/tasks.json`;
 
 
-
 // spatial index used to match OSM tasking manger tasks to local file match
 class Index {
   constructor (joinFeatures) {
@@ -58,12 +57,19 @@ class Index {
     for (var i = 0, len = bboxMatches.length; i < len; i++) {
       const bboxMatch = bboxMatches[i];
 
-      if(this.match(feature, bboxMatch[4].feature)) {
+      let matchFound;
+      try {
+        matchFound = this.match(feature, bboxMatch[4].feature);
+      } catch (e) {
+        matchFound = false;
+      }
+
+      if(matchFound) {
         console.error("found!");
         return bboxMatch[4].feature;
       }
     }
-    console.error("no match found :()");
+    console.error("no match found :(");
   }
 
   match (feature1, feature2) {
@@ -79,8 +85,10 @@ class Index {
     if (union.geometry.type !== 'Polygon') {
       return false;
     }
-    const diffsize1 = turf.area(difference(union, feature1_hull));
-    const diffsize2 = turf.area(difference(union, feature2_hull));
+    const diff1 = difference(union, feature1_hull);
+    const diffsize1 = diff1 ? turf.area(diff1) : 0;
+    const diff2 = difference(union, feature2_hull);
+    const diffsize2 = diff2 ? turf.area(diff2) : 0;
     return (diffsize1 + diffsize2) <= (turf.area(union) * tolerance);
   }
 }
@@ -146,16 +154,44 @@ function getTasks(cb) {
   });
 }
 
+let count = 0;
+
+
 getTasks((error, tasks) => {
   let spatialIndex = new Index(tasks);
 
   fs.createReadStream(filepath)
-    .pipe(JSONStream.parse())
+    .pipe(JSONStream.parse('features.*'))
+    .pipe(es.map(function(feature, cb) {
+      count++;
+      if(0 <=count && count < 10) {
+        cb(null, feature);
+      } else {
+        cb();
+      }
+    }))
     .pipe(es.map(function(feature, cb) {
       const matched = spatialIndex.find(feature);
-      const import_url = feature.properties.import_url;
-      const msg = `match found! task id: ${matched.id} link: ${import_url}`;
-      cb(null, msg);
+      const importURL = feature.properties.import_url;
+      const task = matched.id;
+
+      const postCommentURL = `${projectLink}/task/${task}/comment`;
+      const commentForm = {
+        'comment': `import link: <a href="${importURL}">click here</a>`
+      };
+
+      const headers = {
+        'X-Requested-With': 'XMLHttpRequest',
+      };
+
+      request.post(postCommentURL, {jar: cookieJar, followRedirect: false, headers: headers, form: commentForm}, (error, response, body) => {
+        if(error) {
+          cb(null, "I AM ERROR.");
+        }
+
+        const msg = `comment made: task ${task}! ${body}`;
+        cb(null, msg);
+      });
     }))
     .pipe(JSONStream.stringify())
     .pipe(process.stdout);
