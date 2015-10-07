@@ -200,9 +200,6 @@ fs.createReadStream(namesPath)
       .pipe(es.map(function(feature, cb) {
         const props = feature.properties;
 
-        feature.properties['addr:country'] = 'US';
-        feature.properties['addr:state'] = 'TX';
-
         let housenumber = props['ADDRESS'];
         if (props['ADDRESS_FR']) {
           housenumber += ' ' + props['ADDRESS_FR'];
