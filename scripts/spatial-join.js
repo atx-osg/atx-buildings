@@ -37,7 +37,12 @@ class Index {
     // spatially intersects
     for (var i = 0, len = matches.length; i < len; i++) {
       const match = matches[i];
-      const intersection = turf.intersect(feature.geometry, match[4].feature.geometry);
+      let intersection; 
+      try {
+        intersection = turf.intersect(feature.geometry, match[4].feature.geometry);
+      } catch (e) {
+        throw `invalid topology found: ${feature.id}`;
+      }
       if (intersection !== undefined) {
         return match[4].feature;
       }
@@ -51,14 +56,13 @@ fs.createReadStream(joinFeaturesPath)
   .pipe(es.writeArray((err, joinFeatures) => {
     let index = new Index(joinFeatures[0]);
 
-    process.stdin
+    fs.createReadStream('json/osm-buildings-uncollected.json')
       .pipe(JSONStream.parse())
       .pipe(es.map((feature, cb) => {
         const match = index.find(feature);
         if (match) {
           feature.properties[propertyName] = match.properties[propertyName];
         }
-
         cb(null, feature);
       }))
       .pipe(JSONStream.stringify(false))
