@@ -152,7 +152,7 @@ txt/blockgroups/%-streetnames.txt:  json/blockgroups/%-streets.json
 		uniq > $@
 
 # convert to processed features to OSM XML
-xml/%.xml: json/blockgroups/%.json
+osm/%.osm: json/blockgroups/%.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/geojson-to-osm.js > $@
@@ -181,8 +181,8 @@ blockgroup-%: \
 		json/blockgroups/%-blockgroup.json \
 		json/blockgroups/%-buildings.json \
 		json/blockgroups/%-streets.json \
-		xml/%-buildings.xml \
-		xml/%-addresses.xml
+		osm/%-buildings.osm \
+		osm/%-addresses.osm
 	true
 
 
