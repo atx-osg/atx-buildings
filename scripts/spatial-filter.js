@@ -53,13 +53,15 @@ class Index {
 fs.createReadStream(maskFeaturesPath)
   .pipe(JSONStream.parse())
   .pipe(es.writeArray((err, maskFeatures) => {
-    let index = new Index(maskFeatures[0]);
+    let index;
+    if(maskFeatures[0]) {
+      index = new Index(maskFeatures[0]);
+    }
 
-    //process.stdin
-    fs.createReadStream('json/osm-buildings-uncollected.json')
+    process.stdin
       .pipe(JSONStream.parse())
       .pipe(es.map((feature, cb) => {
-        if (index.intersects(feature)) {
+        if (index && index.intersects(feature)) {
           cb();
         } else {
           cb(null, feature);

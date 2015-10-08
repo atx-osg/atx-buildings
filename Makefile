@@ -147,7 +147,8 @@ json/blockgroups/%-buildings-raw.json: json/coa-buildings-with-geoid.json
 # write out all the OSM building features that are in a blockgroup
 json/blockgroups/%-buildings-osm.json: json/osm-buildings-with-geoid.json
 	mkdir -p $(dir $@)
-	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< > $@
+	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< | \
+		$(BABEL) scripts/collect-features.js > $@
 
 # write out all the raw CoA address points that are in a blockgroup
 json/blockgroups/%-addresses-raw.json: json/coa-addresses-with-geoid.json
@@ -196,6 +197,7 @@ shp/texas-blockgroups.shp: gz/tl_2012_48_bg.zip
 blockgroup-%: \
 		json/blockgroups/%-addresses.json \
 		json/blockgroups/%-blockgroup.json \
+		json/blockgroups/%-buildings-osm.json \
 		json/blockgroups/%-buildings.json \
 		json/blockgroups/%-streets.json \
 		osm/%-buildings.osm \
