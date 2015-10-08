@@ -113,7 +113,7 @@ json/blockgroups/%-buildings.json: json/blockgroups/%-buildings-raw.json json/bl
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"FEATURE": "Structure"}' | \
-		$(BABEL) scripts/spatial-filter.js --join $(word 2, $^) | \
+		$(BABEL) scripts/spatial-filter.js --mask $(word 2, $^) | \
 		$(BABEL) scripts/add-properties.js '{"building": "yes"}' | \
 		$(BABEL) scripts/height-conversions.js | \
 		$(BABEL) scripts/pick-properties.js '["height", "building"]' | \
