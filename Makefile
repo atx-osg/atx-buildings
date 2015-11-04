@@ -112,27 +112,27 @@ json/blockgroups/%/blockgroup.json: json/atx-blockgroups.json
 		grep '"GEOID":"$(word 3, $(subst /, , $(dir $@)))"' > $@
 
 # write out all the OSM building features that are in a blockgroup
-json/blockgroups/%/buildings-osm.json: json/osm-buildings-with-geoid.json
+json/blockgroups/%/osm-buildings.json: json/osm-buildings-with-geoid.json
 	mkdir -p $(dir $@)
 	grep '"GEOID":"$(word 3, $(subst /, , $(dir $@)))"' $< | \
 		$(BABEL) scripts/collect-features.js > $@
 
 # write out the CoA building features that are in a blockgroup
-json/blockgroups/%/buildings-coa.json: json/coa-buildings-with-geoid.json
+json/blockgroups/%/coa-buildings.json: json/coa-buildings-with-geoid.json
 	mkdir -p $(dir $@)
 	grep '"GEOID":"$(word 3, $(subst /, , $(dir $@)))"' $< | \
 		$(BABEL) scripts/simplify-geometries.js --tolerance 0.0000015 > $@
 
 # combine the CoA and OSM buildings into a single feature collection for address
 # matching/filtering
-json/blockgroups/%/buildings-combined.json: json/blockgroups/%/buildings.json json/blockgroups/%/buildings-osm.json
+json/blockgroups/%/combined-buildings.json: json/blockgroups/%/coa-buildings.json json/blockgroups/%/osm-buildings.json
 	mkdir -p $(dir $@)
 	cat $^ | \
 		$(BABEL) scripts/uncollect-features.js | \
 		$(BABEL) scripts/collect-features.js > $@
 
 # process the blockgroup buildings for OSM
-json/blockgroups/%/buildings.json: json/blockgroups/%/buildings-coa.json json/blockgroups/%/buildings-osm.json
+json/blockgroups/%/buildings.json: json/blockgroups/%/coa-buildings.json json/blockgroups/%/osm-buildings.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"FEATURE": "Structure"}' | \
@@ -143,7 +143,7 @@ json/blockgroups/%/buildings.json: json/blockgroups/%/buildings-coa.json json/bl
 		$(BABEL) scripts/collect-features.js > $@
 
 # write out all the raw CoA address points that are in a blockgroup
-json/blockgroups/%/addresses-coa.json: json/coa-addresses-with-geoid.json
+json/blockgroups/%/coa-addresses.json: json/coa-addresses-with-geoid.json
 	mkdir -p $(dir $@)
 	grep '"GEOID":"$(word 3, $(subst /, , $(dir $@)))"' $< > $@ | true
 
@@ -168,7 +168,7 @@ txt/blockgroups/%/streetnames.txt:  json/blockgroups/%/streets.json
 		uniq > $@
 
 # process the blockgroup addresses for OSM
-json/blockgroups/%/addresses.json: json/blockgroups/%/addresses-coa.json txt/blockgroups/%/streetnames.txt json/blockgroups/%/buildings-combined.json
+json/blockgroups/%/addresses.json: json/blockgroups/%/coa-addresses.json txt/blockgroups/%/streetnames.txt json/blockgroups/%/combined-buildings.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"ADDRESS_TY": 1}' | \
@@ -205,7 +205,7 @@ shp/texas-blockgroups.shp: gz/tl_2012_48_bg.zip
 blockgroup-%: \
 		json/blockgroups/%/addresses.json \
 		json/blockgroups/%/blockgroup.json \
-		json/blockgroups/%/buildings-osm.json \
+		json/blockgroups/%/osm-buildings.json \
 		json/blockgroups/%/buildings.json \
 		json/blockgroups/%/streets.json \
 		osm/%-buildings.osm \
