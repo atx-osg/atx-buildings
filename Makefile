@@ -89,17 +89,18 @@ json/coa-%-with-geoid-collected.json: json/coa-%-with-geoid.json
 	sed -i '' '$$ s/.$$//' $@
 	echo '\n]}' >> $@
 
-# add census block group id (GEOID) to each existing OSM building
-json/osm-buildings-uncollected.json: json/osm-buildings.json
+# download osm buildings via overpass API
+json/osm-buildings.json: scripts/osm-buildings.ql
 	mkdir -p $(dir $@)
-	cat $< | \
+	node_modules/query-overpass/cli.js $< | \
 		$(BABEL) scripts/uncollect-features.js > $@
 
-json/osm-buildings-with-geoid.json: json/atx-blockgroups.json json/osm-buildings-uncollected.json
+# add census block group id (GEOID) to each existing OSM building
+json/osm-buildings-with-geoid.json: json/osm-buildings.json json/atx-blockgroups.json
 	mkdir -p $(dir $@)
-	cat $(word 2, $^) | \
+	cat $< | \
 		$(BABEL) scripts/uncollect-features.js | \
-		$(BABEL) scripts/spatial-join.js --property GEOID --join $< > $@
+		$(BABEL) scripts/spatial-join.js --property GEOID --join $(word 2, $^) > $@
 
 # write out the census blockgroup poly to a file
 json/blockgroups/%/blockgroup.json: json/atx-blockgroups.json
