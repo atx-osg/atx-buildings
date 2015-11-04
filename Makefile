@@ -3,7 +3,7 @@
 BABEL := node_modules/babel/bin/babel-node.js
 
 
-.PHONY: addresses buildings clean json tiles blockgroup-%
+.PHONY: addresses buildings clean json tiles blockgroups blockgroup-%
 .SECONDARY:
 
 all: blockgroups
