@@ -141,7 +141,7 @@ json/blockgroups/%/buildings.json: json/blockgroups/%/coa-buildings.json json/bl
 		$(BABEL) scripts/add-properties.js '{"building": "yes"}' | \
 		$(BABEL) scripts/height-conversions.js | \
 		$(BABEL) scripts/pick-properties.js '["height", "building"]' | \
-		$(BABEL) scripts/spatial-join.js --join $(word 2, $^) --property "addr:street" --property "addr:housenumber" | \
+		$(BABEL) scripts/spatial-join.js --join $(word 2, $^) --property "addr:street" --property "addr:housenumber" --property "coa:place_id" | \
 		$(BABEL) scripts/collect-features.js > $@
 
 # write out all the raw CoA address points that are in a blockgroup
@@ -175,7 +175,7 @@ json/blockgroups/%/addresses.json: json/blockgroups/%/coa-addresses.json txt/blo
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"ADDRESS_TY": 1}' | \
 		$(BABEL) scripts/convert-addresses.js --names $(word 2, $^) 2> $@.errors.log | \
-		$(BABEL) scripts/pick-properties.js '["addr:street", "addr:housenumber"]' | \
+		$(BABEL) scripts/pick-properties.js '["addr:street", "addr:housenumber", "coa:place_id"]' | \
 		$(BABEL) scripts/spatial-filter-address-split.js --mask $(word 3, $^) 2> $(@:.json=-to-merge.json) | \
 		$(BABEL) scripts/collect-features.js > $@
 
