@@ -64,11 +64,12 @@ json/atx-blockgroups-matching.json: blockgroups
 		$(BABEL) scripts/simplify-geometries.js --tolerance 0.0009 | \
 		$(BABEL) scripts/collect-features.js > $@
 
-# convert CoA shapefiles to geojohnson
+# convert CoA buildings to geojson
 json/coa-buildings.json: shp/coa-buildings.shp
 	mkdir -p $(dir $@)
 	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
 
+# convert CoA addresses to geojson
 json/coa-addresses.json: shp/coa-addresses.shp
 	mkdir -p $(dir $@)
 	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
