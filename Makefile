@@ -203,15 +203,9 @@ shp/texas-blockgroups.shp: gz/tl_2012_48_bg.zip
 
 # define all the relevant blockgroups
 blockgroup-%: \
-		json/blockgroups/%/addresses.json \
-		json/blockgroups/%/blockgroup.json \
-		json/blockgroups/%/osm-buildings.json \
-		json/blockgroups/%/buildings.json \
-		json/blockgroups/%/streets.json \
-		osm/%-buildings.osm \
-		osm/%-addresses.osm
+		osm/%/buildings.osm \
+		osm/%/addresses.osm
 	true
-
 
 blockgroups: \
 	blockgroup-480219501001 \
