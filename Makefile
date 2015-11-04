@@ -116,13 +116,22 @@ json/blockgroups/%/buildings-osm.json: json/osm-buildings-with-geoid.json
 	grep '"GEOID":"$(word 3, $(subst /, , $(dir $@)))"' $< | \
 		$(BABEL) scripts/collect-features.js > $@
 
-# write out all the raw CoA building features that are in a blockgroup
-json/blockgroups/%/buildings-coa-raw.json: json/coa-buildings-with-geoid.json
+# write out the CoA building features that are in a blockgroup
+json/blockgroups/%/buildings-coa.json: json/coa-buildings-with-geoid.json
 	mkdir -p $(dir $@)
-	grep '"GEOID":"$(word 3, $(subst /, , $(dir $@)))"' $< > $@
+	grep '"GEOID":"$(word 3, $(subst /, , $(dir $@)))"' $< | \
+		$(BABEL) scripts/simplify-geometries.js --tolerance 0.0000015 > $@
+
+# combine the CoA and OSM buildings into a single feature collection for address
+# matching/filtering
+json/blockgroups/%/buildings-combined.json: json/blockgroups/%/buildings.json json/blockgroups/%/buildings-osm.json
+	mkdir -p $(dir $@)
+	cat $^ | \
+		$(BABEL) scripts/uncollect-features.js | \
+		$(BABEL) scripts/collect-features.js > $@
 
 # process the blockgroup buildings for OSM
-json/blockgroups/%/buildings.json: json/blockgroups/%/buildings-coa-raw.json json/blockgroups/%/buildings-osm.json
+json/blockgroups/%/buildings.json: json/blockgroups/%/buildings-coa.json json/blockgroups/%/buildings-osm.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"FEATURE": "Structure"}' | \
@@ -130,13 +139,6 @@ json/blockgroups/%/buildings.json: json/blockgroups/%/buildings-coa-raw.json jso
 		$(BABEL) scripts/add-properties.js '{"building": "yes"}' | \
 		$(BABEL) scripts/height-conversions.js | \
 		$(BABEL) scripts/pick-properties.js '["height", "building"]' | \
-		$(BABEL) scripts/simplify-geometries.js --tolerance 0.0000015 | \
-		$(BABEL) scripts/collect-features.js > $@
-
-json/blockgroups/%/buildings-all.json: json/blockgroups/%/buildings.json json/blockgroups/%/buildings-osm.json
-	mkdir -p $(dir $@)
-	cat $^ | \
-		$(BABEL) scripts/uncollect-features.js | \
 		$(BABEL) scripts/collect-features.js > $@
 
 # process the blockgroup addresses for OSM
