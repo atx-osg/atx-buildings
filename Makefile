@@ -76,11 +76,11 @@ json/coa-addresses.json: shp/coa-addresses.shp
 	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
 
 # add census block group id (GEOID) to each CoA feature
-json/coa-%-with-geoid.json: json/atx-blockgroups.json json/coa-%.json
+json/coa-%-with-geoid.json: json/coa-%.json json/atx-blockgroups.json
 	mkdir -p $(dir $@)
-	cat $(word 2, $^) | \
+	cat $< | \
 		$(BABEL) scripts/uncollect-features.js | \
-		$(BABEL) scripts/spatial-join.js --property GEOID --join $< > $@
+		$(BABEL) scripts/spatial-join.js --property GEOID --join $(word 2, $^) > $@
 
 # collect GEOID'd buildings into a FeatureCollection
 json/coa-%-with-geoid-collected.json: json/coa-%-with-geoid.json
