@@ -174,7 +174,7 @@ json/blockgroups/%/addresses.json: json/blockgroups/%/coa-addresses.json txt/blo
 		$(BABEL) scripts/match-properties.js '{"ADDRESS_TY": 1}' | \
 		$(BABEL) scripts/convert-addresses.js --names $(word 2, $^) 2> $@.errors.log | \
 		$(BABEL) scripts/pick-properties.js '["addr:street", "addr:housenumber"]' | \
-		$(BABEL) scripts/spatial-filter-address-split.js --mask $(word 3, $^) 2> $@-to-merge.json | \
+		$(BABEL) scripts/spatial-filter-address-split.js --mask $(word 3, $^) 2> $(@:.json=-to-merge.json) | \
 		$(BABEL) scripts/collect-features.js > $@
 
 # convert to processed features to OSM XML
