@@ -120,13 +120,20 @@ json/blockgroups/%-buildings.json: json/blockgroups/%-buildings-raw.json json/bl
 		$(BABEL) scripts/simplify-geometries.js --tolerance 0.0000015 | \
 		$(BABEL) scripts/collect-features.js > $@
 
+json/blockgroups/%-buildings-all.json: json/blockgroups/%-buildings.json json/blockgroups/%-buildings-osm.json
+	mkdir -p $(dir $@)
+	cat $^ | \
+		$(BABEL) scripts/uncollect-features.js | \
+		$(BABEL) scripts/collect-features.js > $@
+
 # process the blockgroup addresses for OSM
-json/blockgroups/%-addresses.json: json/blockgroups/%-addresses-raw.json txt/blockgroups/%-streetnames.txt
+json/blockgroups/%-addresses.json: json/blockgroups/%-addresses-raw.json txt/blockgroups/%-streetnames.txt json/blockgroups/%-buildings-all.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"ADDRESS_TY": 1}' | \
 		$(BABEL) scripts/convert-addresses.js --names $(word 2, $^) 2> $@.errors.log | \
 		$(BABEL) scripts/pick-properties.js '["addr:street", "addr:housenumber"]' | \
+		$(BABEL) scripts/spatial-filter-address-split.js --mask $(word 3, $^) 2> $@-to-merge.json | \
 		$(BABEL) scripts/collect-features.js > $@
 
 # download OSM streets for a blockgroup
