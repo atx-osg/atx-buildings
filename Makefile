@@ -102,14 +102,25 @@ json/osm-buildings-with-geoid.json: json/atx-blockgroups.json json/osm-buildings
 		$(BABEL) scripts/spatial-join.js --property GEOID --join $< > $@
 
 # write out the census blockgroup poly to a file
-json/blockgroups/%-blockgroup.json: json/atx-blockgroups.json
+json/blockgroups/%/blockgroup.json: json/atx-blockgroups.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/uncollect-features.js | \
-		grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))' > $@
+		grep '"GEOID":"$(word 3, $(subst /, , $(dir $@)))"' > $@
+
+# write out all the OSM building features that are in a blockgroup
+json/blockgroups/%/buildings-osm.json: json/osm-buildings-with-geoid.json
+	mkdir -p $(dir $@)
+	grep '"GEOID":"$(word 3, $(subst /, , $(dir $@)))"' $< | \
+		$(BABEL) scripts/collect-features.js > $@
+
+# write out all the raw CoA building features that are in a blockgroup
+json/blockgroups/%/buildings-coa-raw.json: json/coa-buildings-with-geoid.json
+	mkdir -p $(dir $@)
+	grep '"GEOID":"$(word 3, $(subst /, , $(dir $@)))"' $< > $@
 
 # process the blockgroup buildings for OSM
-json/blockgroups/%-buildings.json: json/blockgroups/%-buildings-raw.json json/blockgroups/%-buildings-osm.json
+json/blockgroups/%/buildings.json: json/blockgroups/%/buildings-coa-raw.json json/blockgroups/%/buildings-osm.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"FEATURE": "Structure"}' | \
@@ -120,14 +131,14 @@ json/blockgroups/%-buildings.json: json/blockgroups/%-buildings-raw.json json/bl
 		$(BABEL) scripts/simplify-geometries.js --tolerance 0.0000015 | \
 		$(BABEL) scripts/collect-features.js > $@
 
-json/blockgroups/%-buildings-all.json: json/blockgroups/%-buildings.json json/blockgroups/%-buildings-osm.json
+json/blockgroups/%/buildings-all.json: json/blockgroups/%/buildings.json json/blockgroups/%/buildings-osm.json
 	mkdir -p $(dir $@)
 	cat $^ | \
 		$(BABEL) scripts/uncollect-features.js | \
 		$(BABEL) scripts/collect-features.js > $@
 
 # process the blockgroup addresses for OSM
-json/blockgroups/%-addresses.json: json/blockgroups/%-addresses-raw.json txt/blockgroups/%-streetnames.txt json/blockgroups/%-buildings-all.json
+json/blockgroups/%/addresses.json: json/blockgroups/%/addresses-raw.json txt/blockgroups/%/streetnames.txt json/blockgroups/%/buildings-all.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"ADDRESS_TY": 1}' | \
@@ -137,7 +148,7 @@ json/blockgroups/%-addresses.json: json/blockgroups/%-addresses-raw.json txt/blo
 		$(BABEL) scripts/collect-features.js > $@
 
 # download OSM streets for a blockgroup
-json/blockgroups/%-streets.json: json/blockgroups/%-blockgroup.json
+json/blockgroups/%/streets.json: json/blockgroups/%/blockgroup.json
 	mkdir -p $(dir $@)
 	ogrinfo -al $< | \
 		grep Extent | \
@@ -146,21 +157,10 @@ json/blockgroups/%-streets.json: json/blockgroups/%-blockgroup.json
 		awk '{print "\"",$$3,",",$$2,",",$$5,",",$$4,"\""}' | \
 		xargs $(BABEL) scripts/get-osm-features.js --type highway --bbox > $@
 
-# write out all the raw CoA building features that are in a blockgroup
-json/blockgroups/%-buildings-raw.json: json/coa-buildings-with-geoid.json
-	mkdir -p $(dir $@)
-	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< > $@
-
-# write out all the OSM building features that are in a blockgroup
-json/blockgroups/%-buildings-osm.json: json/osm-buildings-with-geoid.json
-	mkdir -p $(dir $@)
-	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< | \
-		$(BABEL) scripts/collect-features.js > $@
-
 # write out all the raw CoA address points that are in a blockgroup
-json/blockgroups/%-addresses-raw.json: json/coa-addresses-with-geoid.json
+json/blockgroups/%/addresses-raw.json: json/coa-addresses-with-geoid.json
 	mkdir -p $(dir $@)
-	grep '"GEOID":"$(word 1, $(subst -, , $(notdir $@)))"' $< > $@ | true
+	grep '"GEOID":"$(word 3, $(subst /, , $(dir $@)))"' $< > $@ | true
 
 # download osm buildings via overpass API
 json/osm-buildings.json: scripts/osm-buildings.ql
@@ -168,7 +168,7 @@ json/osm-buildings.json: scripts/osm-buildings.ql
 	node_modules/query-overpass/cli.js $< > $@
 
 # extract streetnames
-txt/blockgroups/%-streetnames.txt:  json/blockgroups/%-streets.json
+txt/blockgroups/%/streetnames.txt:  json/blockgroups/%/streets.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/uncollect-features.js | \
@@ -202,11 +202,11 @@ shp/texas-blockgroups.shp: gz/tl_2012_48_bg.zip
 
 # define all the relevant blockgroups
 blockgroup-%: \
-		json/blockgroups/%-addresses.json \
-		json/blockgroups/%-blockgroup.json \
-		json/blockgroups/%-buildings-osm.json \
-		json/blockgroups/%-buildings.json \
-		json/blockgroups/%-streets.json \
+		json/blockgroups/%/addresses.json \
+		json/blockgroups/%/blockgroup.json \
+		json/blockgroups/%/buildings-osm.json \
+		json/blockgroups/%/buildings.json \
+		json/blockgroups/%/streets.json \
 		osm/%-buildings.osm \
 		osm/%-addresses.osm
 	true
