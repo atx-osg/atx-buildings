@@ -184,6 +184,13 @@ json/blockgroups/%/addresses.json: json/blockgroups/%/coa-addresses.json txt/blo
 json/blockgroups/%/addresses-to-merge.json: json/blockgroups/%/addresses.json
 	touch $@
 
+json/blockgroups/%/addresses-to-conflate.json: json/blockgroups/%/addresses-to-merge.json json/blockgroups/%/buildings.json
+	mkdir -p $(dir $@)
+	cat $< | \
+		$(BABEL) scripts/uncollect-features.js | \
+		$(BABEL) scripts/spatial-filter.js --mask $(word 2, $^) | \
+		$(BABEL) scripts/collect-features.js > $@
+
 # convert to processed features to OSM XML
 osm/%.osm: json/blockgroups/%.json
 	mkdir -p $(dir $@)
@@ -211,7 +218,8 @@ shp/texas-blockgroups.shp: gz/tl_2012_48_bg.zip
 # define all the relevant blockgroups
 blockgroup-%: \
 		osm/%/buildings.osm \
-		osm/%/addresses.osm
+		osm/%/addresses.osm \
+		osm/%/addresses-to-conflate.osm
 	true
 
 blockgroups: \

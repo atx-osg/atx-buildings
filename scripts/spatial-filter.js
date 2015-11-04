@@ -25,10 +25,16 @@ class Index {
   }
 
   intersects (feature) {
-    let found;
+    let bbox, found;
 
     // get bbox matches (fast)
-    const matches = this.tree.search(extent(feature.geometry));
+    if (feature.geometry.type === 'Point') {
+      const coords = feature.geometry.coordinates;
+      bbox = coords.concat(coords);
+    } else {
+      bbox = extent(feature.geometry);
+    }
+    const matches = this.tree.search(bbox);
 
     // loop through bbox matches, doing more thorough intersection test (slow)
     for (var i = 0, len = matches.length; i < len; i++) {
