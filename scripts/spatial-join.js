@@ -56,7 +56,7 @@ fs.createReadStream(joinFeaturesPath)
   .pipe(es.writeArray((err, joinFeatures) => {
     let index = new Index(joinFeatures[0]);
 
-    fs.createReadStream('json/osm-buildings-uncollected.json')
+    process.stdin
       .pipe(JSONStream.parse())
       .pipe(es.map((feature, cb) => {
         const match = index.find(feature);
