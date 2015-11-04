@@ -133,7 +133,7 @@ json/blockgroups/%/combined-buildings.json: json/blockgroups/%/coa-buildings.jso
 		$(BABEL) scripts/collect-features.js > $@
 
 # process the blockgroup buildings for OSM
-json/blockgroups/%/buildings.json: json/blockgroups/%/coa-buildings.json
+json/blockgroups/%/buildings.json: json/blockgroups/%/coa-buildings.json json/blockgroups/%/addresses-to-merge.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/uncollect-features.js | \
@@ -141,6 +141,7 @@ json/blockgroups/%/buildings.json: json/blockgroups/%/coa-buildings.json
 		$(BABEL) scripts/add-properties.js '{"building": "yes"}' | \
 		$(BABEL) scripts/height-conversions.js | \
 		$(BABEL) scripts/pick-properties.js '["height", "building"]' | \
+		$(BABEL) scripts/spatial-join.js --join $(word 2, $^) --property "addr:street" --property "addr:housenumber" | \
 		$(BABEL) scripts/collect-features.js > $@
 
 # write out all the raw CoA address points that are in a blockgroup
@@ -177,6 +178,11 @@ json/blockgroups/%/addresses.json: json/blockgroups/%/coa-addresses.json txt/blo
 		$(BABEL) scripts/pick-properties.js '["addr:street", "addr:housenumber"]' | \
 		$(BABEL) scripts/spatial-filter-address-split.js --mask $(word 3, $^) 2> $(@:.json=-to-merge.json) | \
 		$(BABEL) scripts/collect-features.js > $@
+
+# rule to wire up dependency graph to know that addresses-to-merge.json is made
+# at during the addresses.json creation step
+json/blockgroups/%/addresses-to-merge.json: json/blockgroups/%/addresses.json
+	touch $@
 
 # convert to processed features to OSM XML
 osm/%.osm: json/blockgroups/%.json

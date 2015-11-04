@@ -13,8 +13,11 @@ import rbush from 'rbush';
 const argv = minimist(process.argv.slice(2));
 
 const joinFeaturesPath = argv['join'];
-const propertyName = argv['property'];
 
+let properties = argv['property'];
+if(!Array.isArray(properties)) {
+  properties = [properties];
+}
 
 class Index {
   constructor (joinFeatures) {
@@ -61,7 +64,9 @@ fs.createReadStream(joinFeaturesPath)
       .pipe(es.map((feature, cb) => {
         const match = index.find(feature);
         if (match) {
-          feature.properties[propertyName] = match.properties[propertyName];
+          properties.forEach((propertyName) => {
+            feature.properties[propertyName] = match.properties[propertyName];
+          });
         }
         cb(null, feature);
       }))
