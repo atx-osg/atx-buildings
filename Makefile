@@ -133,7 +133,7 @@ json/blockgroups/%/combined-buildings.json: json/blockgroups/%/coa-buildings.jso
 		$(BABEL) scripts/collect-features.js > $@
 
 # process the blockgroup buildings for OSM
-json/blockgroups/%/buildings.json: json/blockgroups/%/coa-buildings.json json/blockgroups/%/addresses-to-merge.json
+json/blockgroups/%/buildings-to-import.json: json/blockgroups/%/coa-buildings.json json/blockgroups/%/addresses-to-merge.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/uncollect-features.js | \
@@ -170,21 +170,21 @@ txt/blockgroups/%/streetnames.txt:  json/blockgroups/%/streets.json
 		uniq > $@
 
 # process the blockgroup addresses for OSM
-json/blockgroups/%/addresses.json: json/blockgroups/%/coa-addresses.json txt/blockgroups/%/streetnames.txt json/blockgroups/%/combined-buildings.json
+json/blockgroups/%/addresses-to-import.json: json/blockgroups/%/coa-addresses.json txt/blockgroups/%/streetnames.txt json/blockgroups/%/combined-buildings.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"ADDRESS_TY": 1}' | \
 		$(BABEL) scripts/convert-addresses.js --names $(word 2, $^) 2> $@.errors.log | \
 		$(BABEL) scripts/pick-properties.js '["addr:street", "addr:housenumber", "coa:place_id"]' | \
-		$(BABEL) scripts/spatial-filter-address-split.js --mask $(word 3, $^) 2> $(@:.json=-to-merge.json) | \
+		$(BABEL) scripts/spatial-filter-address-split.js --mask $(word 3, $^) 2> $(@:-to-import.json=-to-merge.json) | \
 		$(BABEL) scripts/collect-features.js > $@
 
 # rule to wire up dependency graph to know that addresses-to-merge.json is made
 # at during the addresses.json creation step
-json/blockgroups/%/addresses-to-merge.json: json/blockgroups/%/addresses.json
+json/blockgroups/%/addresses-to-merge.json: json/blockgroups/%/addresses-to-import.json
 	touch $@
 
-json/blockgroups/%/addresses-to-conflate.json: json/blockgroups/%/addresses-to-merge.json json/blockgroups/%/buildings.json
+json/blockgroups/%/addresses-to-conflate.json: json/blockgroups/%/addresses-to-merge.json json/blockgroups/%/buildings-to-import.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/uncollect-features.js | \
@@ -217,8 +217,8 @@ shp/texas-blockgroups.shp: gz/tl_2012_48_bg.zip
 
 # define all the relevant blockgroups
 blockgroup-%: \
-		osm/%/buildings.osm \
-		osm/%/addresses.osm \
+		osm/%/buildings-to-import.osm \
+		osm/%/addresses-to-import.osm \
 		osm/%/addresses-to-conflate.osm
 	true
 
