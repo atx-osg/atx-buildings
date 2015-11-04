@@ -94,8 +94,7 @@ json/coa-%-with-geoid-collected.json: json/coa-%-with-geoid.json
 # download osm buildings via overpass API
 json/osm-buildings.json: scripts/osm-buildings.ql
 	mkdir -p $(dir $@)
-	node_modules/query-overpass/cli.js $< | \
-		$(BABEL) scripts/uncollect-features.js > $@
+	node_modules/query-overpass/cli.js $<  > $@
 
 # add census block group id (GEOID) to each existing OSM building
 json/osm-buildings-with-geoid.json: json/osm-buildings.json json/atx-blockgroups.json
@@ -118,10 +117,12 @@ json/blockgroups/%/osm-buildings.json: json/osm-buildings-with-geoid.json
 		$(BABEL) scripts/collect-features.js > $@
 
 # write out the CoA building features that are in a blockgroup
-json/blockgroups/%/coa-buildings.json: json/coa-buildings-with-geoid.json
+json/blockgroups/%/coa-buildings.json: json/coa-buildings-with-geoid.json json/blockgroups/%/osm-buildings.json
 	mkdir -p $(dir $@)
 	grep '"GEOID":"$(word 3, $(subst /, , $(dir $@)))"' $< | \
-		$(BABEL) scripts/simplify-geometries.js --tolerance 0.0000015 > $@
+		$(BABEL) scripts/simplify-geometries.js --tolerance 0.0000015 | \
+		$(BABEL) scripts/spatial-filter.js --mask $(word 2, $^) | \
+		$(BABEL) scripts/collect-features.js > $@
 
 # combine the CoA and OSM buildings into a single feature collection for address
 # matching/filtering
@@ -132,11 +133,11 @@ json/blockgroups/%/combined-buildings.json: json/blockgroups/%/coa-buildings.jso
 		$(BABEL) scripts/collect-features.js > $@
 
 # process the blockgroup buildings for OSM
-json/blockgroups/%/buildings.json: json/blockgroups/%/coa-buildings.json json/blockgroups/%/osm-buildings.json
+json/blockgroups/%/buildings.json: json/blockgroups/%/coa-buildings.json
 	mkdir -p $(dir $@)
 	cat $< | \
+		$(BABEL) scripts/uncollect-features.js | \
 		$(BABEL) scripts/match-properties.js '{"FEATURE": "Structure"}' | \
-		$(BABEL) scripts/spatial-filter.js --mask $(word 2, $^) | \
 		$(BABEL) scripts/add-properties.js '{"building": "yes"}' | \
 		$(BABEL) scripts/height-conversions.js | \
 		$(BABEL) scripts/pick-properties.js '["height", "building"]' | \
