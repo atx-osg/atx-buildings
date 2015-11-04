@@ -141,15 +141,10 @@ json/blockgroups/%/buildings.json: json/blockgroups/%/buildings-coa.json json/bl
 		$(BABEL) scripts/pick-properties.js '["height", "building"]' | \
 		$(BABEL) scripts/collect-features.js > $@
 
-# process the blockgroup addresses for OSM
-json/blockgroups/%/addresses.json: json/blockgroups/%/addresses-raw.json txt/blockgroups/%/streetnames.txt json/blockgroups/%/buildings-all.json
+# write out all the raw CoA address points that are in a blockgroup
+json/blockgroups/%/addresses-coa.json: json/coa-addresses-with-geoid.json
 	mkdir -p $(dir $@)
-	cat $< | \
-		$(BABEL) scripts/match-properties.js '{"ADDRESS_TY": 1}' | \
-		$(BABEL) scripts/convert-addresses.js --names $(word 2, $^) 2> $@.errors.log | \
-		$(BABEL) scripts/pick-properties.js '["addr:street", "addr:housenumber"]' | \
-		$(BABEL) scripts/spatial-filter-address-split.js --mask $(word 3, $^) 2> $@-to-merge.json | \
-		$(BABEL) scripts/collect-features.js > $@
+	grep '"GEOID":"$(word 3, $(subst /, , $(dir $@)))"' $< > $@ | true
 
 # download OSM streets for a blockgroup
 json/blockgroups/%/streets.json: json/blockgroups/%/blockgroup.json
@@ -161,17 +156,8 @@ json/blockgroups/%/streets.json: json/blockgroups/%/blockgroup.json
 		awk '{print "\"",$$3,",",$$2,",",$$5,",",$$4,"\""}' | \
 		xargs $(BABEL) scripts/get-osm-features.js --type highway --bbox > $@
 
-# write out all the raw CoA address points that are in a blockgroup
-json/blockgroups/%/addresses-raw.json: json/coa-addresses-with-geoid.json
-	mkdir -p $(dir $@)
-	grep '"GEOID":"$(word 3, $(subst /, , $(dir $@)))"' $< > $@ | true
-
-# download osm buildings via overpass API
-json/osm-buildings.json: scripts/osm-buildings.ql
-	mkdir -p $(dir $@)
-	node_modules/query-overpass/cli.js $< > $@
-
-# extract streetnames
+# extract the OSM streetnames from streets within a census block area for
+# matching with COA addresses
 txt/blockgroups/%/streetnames.txt:  json/blockgroups/%/streets.json
 	mkdir -p $(dir $@)
 	cat $< | \
@@ -179,6 +165,16 @@ txt/blockgroups/%/streetnames.txt:  json/blockgroups/%/streets.json
 		$(BABEL) scripts/extract-names.js | \
 		sort | \
 		uniq > $@
+
+# process the blockgroup addresses for OSM
+json/blockgroups/%/addresses.json: json/blockgroups/%/addresses-coa.json txt/blockgroups/%/streetnames.txt json/blockgroups/%/buildings-combined.json
+	mkdir -p $(dir $@)
+	cat $< | \
+		$(BABEL) scripts/match-properties.js '{"ADDRESS_TY": 1}' | \
+		$(BABEL) scripts/convert-addresses.js --names $(word 2, $^) 2> $@.errors.log | \
+		$(BABEL) scripts/pick-properties.js '["addr:street", "addr:housenumber"]' | \
+		$(BABEL) scripts/spatial-filter-address-split.js --mask $(word 3, $^) 2> $@-to-merge.json | \
+		$(BABEL) scripts/collect-features.js > $@
 
 # convert to processed features to OSM XML
 osm/%.osm: json/blockgroups/%.json
