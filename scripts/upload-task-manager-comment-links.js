@@ -10,7 +10,7 @@ import minimist from 'minimist';
 import rbush from 'rbush';
 import request from 'request';
 import turf from 'turf';
-// turf.difference was recently added to turf
+// turf.difference was recently added to turf so needs to be explicitly imported
 import difference from 'turf-difference';
 
 const argv = minimist(process.argv.slice(2));
@@ -172,12 +172,10 @@ getTasks((error, tasks) => {
     }))
     .pipe(es.map(function(feature, cb) {
       const matched = spatialIndex.find(feature);
-      const importURL = feature.properties.import_url;
       const task = matched.id;
-
       const postCommentURL = `${projectLink}/task/${task}/comment`;
       const commentForm = {
-        'comment': `import link: <a href="${importURL}">click here</a>`
+        'comment': feature.properties.import_comment,
       };
 
       const headers = {
