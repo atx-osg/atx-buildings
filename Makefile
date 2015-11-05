@@ -61,12 +61,12 @@ json/atx-blockgroups.json: shp/texas-blockgroups.shp
 	ogr2ogr -f "GeoJSON" -clipdst -98.2 29.9 -97.3 30.7 -t_srs EPSG:4326 $@ $<
 
 # make a file that contains only the blockgroups that we have some data for
-json/atx-blockgroups-matching.json: blockgroups
+json/atx-blockgroups-matching.json:
 	mkdir -p $(dir $@)
 	cat json/blockgroups/*/blockgroup.json | \
 		$(BABEL) scripts/simplify-geometries.js --tolerance 0.0009 | \
 		$(BABEL) scripts/add-import-properties.js | \
-		$(BABEL) scripts/pick-properties.js '["import_url"]' | \
+		$(BABEL) scripts/pick-properties.js '["import_comment"]' | \
 		$(BABEL) scripts/collect-features.js > $@
 
 # convert CoA buildings to geojson
@@ -225,7 +225,7 @@ json/atx-blockgroups-matching-1.json: json/atx-blockgroups-matching.json
 		head -1 > $@
 
 upload-task-links: json/atx-blockgroups-matching.json
-	$(BABEL) debug scripts/upload-task-manager-comment-links.js --task-manager tasks.openstreetmap.us --project 4 --username `cat ${USERNAME_FILE}` --password `cat ${PASSWORD_FILE}` $<
+	$(BABEL) scripts/upload-task-manager-comment-links.js --task-manager tasks.openstreetmap.us --project 4 --username `cat ${USERNAME_FILE}` --password `cat ${PASSWORD_FILE}` $<
 
 
 # define all the relevant blockgroups
