@@ -1,8 +1,9 @@
 json/
 gz/
 node_modules/
+secrets/
 shp/
 tiles/
 txt/
-xml/
+#xml/
 zip/

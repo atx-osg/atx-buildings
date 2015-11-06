@@ -18,6 +18,7 @@
   "dependencies": {
     "JSONStream": "^1.0.4",
     "babel": "^5.8.23",
+    "cheerio": "^0.19.0",
     "event-stream": "^3.3.1",
     "geojson-extent": "^0.3.1",
     "lodash": "^3.10.1",
@@ -27,6 +28,8 @@
     "osm-and-geojson": "^0.1.2",
     "query-overpass": "^1.0.0",
     "rbush": "^1.4.0",
-    "turf": "^2.0.2"
+    "request": "^2.64.0",
+    "turf": "^2.0.2",
+    "turf-difference": "^2.0.0"
   }
 }

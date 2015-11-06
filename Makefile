@@ -1,6 +1,8 @@
 # This is a Makefile for automatically downloading and preparing data
 
 BABEL := node_modules/babel/bin/babel-node.js
+USERNAME_FILE := ./secrets/osm-username
+PASSWORD_FILE := ./secrets/osm-password
 
 
 .PHONY: addresses buildings clean json tiles blockgroups blockgroup-%
@@ -59,10 +61,11 @@ json/atx-blockgroups.json: shp/texas-blockgroups.shp
 	ogr2ogr -f "GeoJSON" -clipdst -98.2 29.9 -97.3 30.7 -t_srs EPSG:4326 $@ $<
 
 # make a file that contains only the blockgroups that we have some data for
-json/atx-blockgroups-matching.json: blockgroups
+json/atx-blockgroups-matching.json:
 	mkdir -p $(dir $@)
 	cat json/blockgroups/*/blockgroup.json | \
-		$(BABEL) scripts/simplify-geometries.js --tolerance 0.0009 | \
+		$(BABEL) scripts/add-import-properties.js | \
+		$(BABEL) scripts/pick-properties.js '["import_comment"]' | \
 		$(BABEL) scripts/collect-features.js > $@
 
 # convert CoA buildings to geojson
@@ -213,6 +216,15 @@ shp/texas-blockgroups.shp: gz/tl_2012_48_bg.zip
 	for file in $(basename $@)/*; do chmod 644 $$file; mv $$file $(basename $@).$${file##*.}; done
 	rmdir $(basename $@)
 	touch $@
+
+
+json/atx-blockgroups-matching-1.json: json/atx-blockgroups-matching.json
+	cat $< | \
+		$(BABEL) scripts/uncollect-features.js | \
+		head -1 > $@
+
+upload-task-links: json/atx-blockgroups-matching.json
+	$(BABEL) scripts/upload-task-manager-comment-links.js --task-manager tasks.openstreetmap.us --project 7 --username `cat ${USERNAME_FILE}` --password `cat ${PASSWORD_FILE}` $<
 
 
 # define all the relevant blockgroups
