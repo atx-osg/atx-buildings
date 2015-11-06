@@ -18,7 +18,7 @@ process.stdin
     const loadAndZoomURL = `${remoteControlBase}/load_and_zoom?left=${bbox[0]}&bottom=${bbox[1]}&right=${bbox[2]}&top=${bbox[3]}`;
 
     feature.properties.import_comment = `<p>import links:</p>
-- <a target="_blank" href="${loadAndZoomURL}">load existing OSM data</a>`;
+- <a href="${loadAndZoomURL}">load existing OSM data</a>`;
 
     const filenames = [
       'buildings-to-import',
@@ -30,7 +30,7 @@ process.stdin
       const osmFile = `osm/${blockGroup}/${filename}.osm`;
       let stats = fs.statSync(osmFile);
       if (stats.size > 114) {
-        const formattedLink = `\n- <a target="_blank" href="${importBase}/${filename}.osm">${filename}</a>`;
+        const formattedLink = `\n- <a href="${importBase}/${filename}.osm">${filename}.osm</a>`;
         feature.properties.import_comment += formattedLink;
       }
     });
