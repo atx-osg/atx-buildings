@@ -164,11 +164,9 @@ getTasks((error, tasks) => {
     .pipe(JSONStream.parse('features.*'))
     .pipe(es.map(function(feature, cb) {
       count++;
-      if(0 <=count && count < 10) {
+      setTimeout(() => {
         cb(null, feature);
-      } else {
-        cb();
-      }
+      }, count * 10);
     }))
     .pipe(es.map(function(feature, cb) {
       const matched = spatialIndex.find(feature);
