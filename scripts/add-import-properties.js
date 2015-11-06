@@ -13,7 +13,7 @@ process.stdin
 
     const blockGroup = feature.properties.GEOID;
     const remoteControlBase = `http://localhost:8111`;
-    const importBase = `${remoteControlBase}/import?url=https://github.com/wilsaj/atx-buildings/raw/with-import-data/osm/${blockGroup}`;
+    const importBase = `${remoteControlBase}/import?new_layer=true&url=https://github.com/wilsaj/atx-buildings/raw/with-import-data/osm/${blockGroup}`;
     const loadAndZoomURL = `${remoteControlBase}/load_and_zoom?left=${bbox[0]}&bottom=${bbox[1]}&right=${bbox[2]}&top=${bbox[3]}`;
 
     feature.properties.import_comment = `<p>import links:</p>
