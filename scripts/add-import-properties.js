@@ -1,6 +1,7 @@
 // takes a json string, stream in GeoJSON features and stream out features with
 // the json merged into the properties
 
+import fs from 'fs';
 import es from 'event-stream';
 import extent from 'geojson-extent';
 import JSONStream from 'JSONStream';
@@ -17,16 +18,26 @@ process.stdin
     const loadAndZoomURL = `${remoteControlBase}/load_and_zoom?left=${bbox[0]}&bottom=${bbox[1]}&right=${bbox[2]}&top=${bbox[3]}`;
 
     feature.properties.import_comment = `<p>import links:</p>
-- <a target="_blank" href="${loadAndZoomURL}">load existing OSM data</a>
-- <a target="_blank" href="${importBase}/buildings-to-import.osm">buildings-to-conflate</a>
-- <a target="_blank" href="${importBase}/addresses-to-import.osm">addresses-to-import</a>
-- <a target="_blank" href="${importBase}/addresses-to-conflate.osm">addresses-to-conflate</a>
-</li>
-`;
+- <a target="_blank" href="${loadAndZoomURL}">load existing OSM data</a>`;
+
+    const filenames = [
+      'buildings-to-import',
+      'addresses-to-import',
+      'addresses-to-conflate',
+    ];
+
+    filenames.forEach((filename) => {
+      const osmFile = `osm/${blockGroup}/${filename}.osm`;
+      let stats = fs.statSync(osmFile);
+      if (stats.size > 114) {
+        const formattedLink = `\n- <a target="_blank" href="${importBase}/${filename}.osm">${filename}</a>`;
+        feature.properties.import_comment += formattedLink;
+      }
+    });
+
+    feature.properties.import_comment += "</li>";
 
     cb(null, feature);
   }))
   .pipe(JSONStream.stringify(false))
   .pipe(process.stdout);
-
-
