@@ -144,6 +144,8 @@ function authDance(cb) {
 }
 
 
+// initiate auth and download tasks.json from tasking manager
+// the callback will receive the tasks geojson
 function getTasks(cb) {
   authDance(() => {
     request
@@ -154,9 +156,13 @@ function getTasks(cb) {
   });
 }
 
+
+// simple global counter to handle rate limiting (so as not to DOS tasking
+// manager and possibly trigger errors)
 let count = 0;
 
 
+// let's do this thing
 getTasks((error, tasks) => {
   let spatialIndex = new Index(tasks);
 
