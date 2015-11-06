@@ -64,7 +64,6 @@ json/atx-blockgroups.json: shp/texas-blockgroups.shp
 json/atx-blockgroups-matching.json:
 	mkdir -p $(dir $@)
 	cat json/blockgroups/*/blockgroup.json | \
-		$(BABEL) scripts/simplify-geometries.js --tolerance 0.0009 | \
 		$(BABEL) scripts/add-import-properties.js | \
 		$(BABEL) scripts/pick-properties.js '["import_comment"]' | \
 		$(BABEL) scripts/collect-features.js > $@
@@ -225,7 +224,7 @@ json/atx-blockgroups-matching-1.json: json/atx-blockgroups-matching.json
 		head -1 > $@
 
 upload-task-links: json/atx-blockgroups-matching.json
-	$(BABEL) scripts/upload-task-manager-comment-links.js --task-manager tasks.openstreetmap.us --project 4 --username `cat ${USERNAME_FILE}` --password `cat ${PASSWORD_FILE}` $<
+	$(BABEL) scripts/upload-task-manager-comment-links.js --task-manager tasks.openstreetmap.us --project 7 --username `cat ${USERNAME_FILE}` --password `cat ${PASSWORD_FILE}` $<
 
 
 # define all the relevant blockgroups
