@@ -166,7 +166,7 @@ getTasks((error, tasks) => {
       count++;
       setTimeout(() => {
         cb(null, feature);
-      }, count * 10);
+      }, count * 100);
     }))
     .pipe(es.map(function(feature, cb) {
       const matched = spatialIndex.find(feature);
