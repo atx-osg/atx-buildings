@@ -12,11 +12,10 @@ process.stdin
     // negative values indicate no available height
     if (original > 0) {
       const meters = original * 0.3048;
-      const rounded = Math.round(meters * 100) / 100;
+      const rounded = meters.toFixed(2);
       feature.properties['height'] = rounded;
     }
     cb(null, feature);
   }))
   .pipe(JSONStream.stringify(false))
   .pipe(process.stdout);
-
