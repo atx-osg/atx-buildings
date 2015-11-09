@@ -180,7 +180,7 @@ function bestMatch(address, names) {
       return sorted[0][0];
     } else {
       const tied = sorted.filter((pair) => pair[1] === sorted[0][1]);
-      const shortest = _.sortBy(tied, (name) => -1 * name.length)[0];
+      const shortest = _.sortBy(tied, (name) => -1 * name.length)[0][0];
       return shortest;
     }
   } else {
