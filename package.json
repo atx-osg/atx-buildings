@@ -30,6 +30,7 @@
     "rbush": "^1.4.0",
     "request": "^2.64.0",
     "turf": "^2.0.2",
+    "turf-buffer": "^1.0.4",
     "turf-difference": "^2.0.0"
   }
 }
