@@ -55,19 +55,19 @@ class Index {
     return undefined;
   }
 
-  register (feature) {
-    let intersectionFeature = this.findHit(feature);
+  register (address) {
+    let intersectionFeature = this.findHit(address);
     if (intersectionFeature) {
-      intersectionFeature.properties._hits.push(feature);
+      intersectionFeature.properties._hits.push(address);
     } else {
-      const buffered = buffer(feature, 3, 'meters');
+      const buffered = buffer(address, 3, 'meters');
 
       let nearFeature = this.findHit(buffered);
       if (nearFeature) {
-        nearFeature.properties._nearHits.push(feature);
+        nearFeature.properties._nearHits.push(address);
       }
 
-      this.misses.push(feature);
+      this.misses.push(address);
     }
   }
 
@@ -87,7 +87,7 @@ class Index {
   }
 
   // call after all addresses have been registered to get only the addresses
-  // that are not unique to a building or did not hit intersect a building at
+  // that are not unique to a building or did not intersect a building at
   // all
   nonuniques () {
     let nonuniqueAddresses = [];
@@ -126,7 +126,7 @@ class Index {
           return;
         }
 
-        // remove from this.misses since this is no longer a miss
+        // remove this point from the set of misses since this is no longer a miss
         const idx = _.findIndex(this.misses, (obj) => {
           return obj.geometry.coordinates[0] === pt.geometry.coordinates[0] && obj.geometry.coordinates[1] === pt.geometry.coordinates[1];
         });
