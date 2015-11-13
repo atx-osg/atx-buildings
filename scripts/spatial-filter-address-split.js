@@ -9,7 +9,9 @@ import fs from 'fs';
 import JSONStream from 'JSONStream';
 import minimist from 'minimist';
 import turf from 'turf';
+import buffer from 'turf-buffer';
 import rbush from 'rbush';
+import _ from 'lodash';
 
 const argv = minimist(process.argv.slice(2));
 
@@ -22,13 +24,14 @@ class Index {
     const loadArrays = maskFeatures.features.map((feature) => {
       feature.properties = feature.properties || {};
       feature.properties._hits = [];
+      feature.properties._nearHits = [];
       return extent(feature).concat({'feature': feature});
     });
     this.tree.load(loadArrays);
     this.misses = [];
   }
 
-  find_hit (feature) {
+  findHit (feature) {
     let found;
 
     // get bbox matches (fast)
@@ -52,12 +55,19 @@ class Index {
     return undefined;
   }
 
-  register (feature) {
-    let intersection_feature = this.find_hit(feature);
-    if (intersection_feature) {
-      intersection_feature.properties._hits.push(feature);
+  register (address) {
+    let intersectionFeature = this.findHit(address);
+    if (intersectionFeature) {
+      intersectionFeature.properties._hits.push(address);
     } else {
-      this.misses.push(feature);
+      const buffered = buffer(address, 3, 'meters');
+
+      let nearFeature = this.findHit(buffered);
+      if (nearFeature) {
+        nearFeature.properties._nearHits.push(address);
+      }
+
+      this.misses.push(address);
     }
   }
 
@@ -77,7 +87,7 @@ class Index {
   }
 
   // call after all addresses have been registered to get only the addresses
-  // that are not unique to a building or did not hit intersect a building at
+  // that are not unique to a building or did not intersect a building at
   // all
   nonuniques () {
     let nonuniqueAddresses = [];
@@ -95,6 +105,48 @@ class Index {
     });
 
     return nonuniqueAddresses;
+  }
+
+  // run through the buildings and check for near misses
+  // - if there is no hit, but a single near miss then move it to be on top of
+  //   the building
+  // - if there is a single hit and any near misses, then invalidate the hit (so
+  //   both points will be directly imported)
+  //
+  // IMPORTANT: should be only called after all points have been register()'d
+  processNearMisses () {
+    this.tree.all().forEach((treeObj) => {
+      const feature = treeObj[4].feature;
+
+      // if there are no hits, and only one near hit, place the point on the
+      // building and call it a hit
+      if (feature.properties._hits.length === 0 && feature.properties._nearHits.length === 1) {
+        let pt = feature.properties._nearHits[0];
+        if (pt.geometry.type !== 'Point') {
+          return;
+        }
+
+        // remove this point from the set of misses since this is no longer a miss
+        const idx = _.findIndex(this.misses, (obj) => {
+          return obj.geometry.coordinates[0] === pt.geometry.coordinates[0] && obj.geometry.coordinates[1] === pt.geometry.coordinates[1];
+        });
+        this.misses.splice(idx, 1);
+
+        // pick a point somewhere on the feature to be the new address pt
+        // representation - this is okay because the point will be merged into
+        // the building later
+        let ptOnFeature = turf.pointOnSurface(feature);
+        ptOnFeature.properties = pt.properties;
+        feature.properties._hits = [ptOnFeature];
+        feature.properties._nearHits = [];
+      }
+
+      // invalidate a hit if there are any near misses close by
+      if (feature.properties._hits.length === 1 && feature.properties._nearHits.length !== 0 ) {
+        this.misses.push(feature.properties._hits[0]);
+        feature.properties._hits = [];
+      };
+    });
   }
 }
 
@@ -114,6 +166,8 @@ fs.createReadStream(maskFeaturesPath)
         cb(null);
       }))
       .on('end', () => {
+        index.processNearMisses();
+
         // write addresses for direct import as points to stdout
         es.readArray(index.nonuniques())
           .pipe(JSONStream.stringify(false))
