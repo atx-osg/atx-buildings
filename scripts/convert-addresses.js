@@ -206,10 +206,6 @@ fs.createReadStream(namesPath)
         }
         feature.properties['addr:housenumber'] = housenumber;
 
-        if (props['PLACE_ID']) {
-          feature.properties['coa:place_id'] = props['PLACE_ID'];
-        }
-
         const street = bestMatch(feature.properties, names);
         if (street) {
           feature.properties['addr:street'] = street;
