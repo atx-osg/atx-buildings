@@ -178,7 +178,7 @@ json/blockgroups/%/addresses-to-import.json: json/blockgroups/%/coa-addresses.js
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"ADDRESS_TY": 1}' | \
 		$(BABEL) scripts/convert-addresses.js --names $(word 2, $^) 2> $@.errors.log | \
-		$(BABEL) scripts/pick-properties.js '["addr:street", "addr:housenumber", "coa:place_id"]' | \
+		$(BABEL) scripts/pick-properties.js '["addr:street", "addr:housenumber"]' | \
 		$(BABEL) scripts/spatial-filter-address-split.js --mask $(word 3, $^) 2> $(@:-to-import.json=-to-merge.json) | \
 		$(BABEL) scripts/collect-features.js > $@
 
