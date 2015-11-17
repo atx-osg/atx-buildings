@@ -89,7 +89,15 @@ json/coa-addresses.json: shp/coa-addresses.shp
 	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
 
 # add census block group id (GEOID) to each CoA feature
-json/coa-%-with-geoid.json: json/coa-%.json json/atx-blockgroups.json
+json/coa-addresses-with-bg-id.json: json/coa-addresses.json json/zipcodes.json json/atx-blockgroups.json
+	mkdir -p $(dir $@)
+	cat $< | \
+		$(BABEL) scripts/uncollect-features.js | \
+		$(BABEL) scripts/spatial-join.js --property ZIPCODE --join $(word 2, $^) | \
+		$(BABEL) scripts/spatial-join.js --property GEOID --join $(word 3, $^) > $@
+
+# add census block group id (GEOID) to each CoA feature
+json/coa-buildings-with-bg-id.json: json/coa-buildings.json json/atx-blockgroups.json
 	mkdir -p $(dir $@)
 	cat $< | \
 		$(BABEL) scripts/uncollect-features.js | \
@@ -188,7 +196,7 @@ json/blockgroups/%/addresses-to-import.json: json/blockgroups/%/coa-addresses.js
 	cat $< | \
 		$(BABEL) scripts/match-properties.js '{"ADDRESS_TY": 1}' | \
 		$(BABEL) scripts/convert-addresses.js --names $(word 2, $^) 2> $@.errors.log | \
-		$(BABEL) scripts/pick-properties.js '["addr:street", "addr:housenumber"]' | \
+		$(BABEL) scripts/pick-properties.js '["addr:street", "addr:housenumber", "addr:postcode"]' | \
 		$(BABEL) scripts/spatial-filter-address-split.js --mask $(word 3, $^) 2> $(@:-to-import.json=-to-merge.json) | \
 		$(BABEL) scripts/collect-features.js > $@
 
