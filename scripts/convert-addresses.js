@@ -206,6 +206,10 @@ fs.createReadStream(namesPath)
         }
         feature.properties['addr:housenumber'] = housenumber;
 
+        if (props['ZIPCODE']) {
+          feature.properties['addr:postcode'] = props['ZIPCODE'];
+        }
+
         const street = bestMatch(feature.properties, names);
         if (street) {
           feature.properties['addr:street'] = street;
