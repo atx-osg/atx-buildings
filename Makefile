@@ -34,6 +34,10 @@ zip/address_point.zip:
 	curl 'https://data.austintexas.gov/api/geospatial/bpa2-q2tj?method=export&format=Shapefile' -o $@.download
 	mv $@.download $@
 
+zip/zipcodes.zip:
+	mkdir -p $(dir $@)
+	curl 'https://data.austintexas.gov/api/geospatial/23x8-agw7?method=export&format=Shapefile' -o $@.download
+	mv $@.download $@
 
 # unzip shapefiles
 shp/%.shp:
@@ -46,6 +50,7 @@ shp/%.shp:
 
 shp/coa-addresses.shp: zip/address_point.zip
 shp/coa-buildings.shp: zip/building_footprints_2013.zip
+shp/zipcodes.shp: zip/zipcodes.zip
 
 # add a way of generating shapefile of coa datasets with census block GEOID for
 # visualization purposes
@@ -67,6 +72,11 @@ json/atx-blockgroups-matching.json:
 		$(BABEL) scripts/add-import-properties.js | \
 		$(BABEL) scripts/pick-properties.js '["import_comment"]' | \
 		$(BABEL) scripts/collect-features.js > $@
+
+# convert zipcodes to GeoJSON, transform to WGS84
+json/zipcodes.json: shp/zipcodes.shp
+	mkdir -p $(dir $@)
+	ogr2ogr -f "GeoJSON" -t_srs EPSG:4326 $@ $<
 
 # convert CoA buildings to geojson
 json/coa-buildings.json: shp/coa-buildings.shp
