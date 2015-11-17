@@ -88,7 +88,7 @@ json/coa-addresses.json: shp/coa-addresses.shp
 	mkdir -p $(dir $@)
 	ogr2ogr -f GeoJSON -dim 2 -t_srs EPSG:4326 $@ $<
 
-# add census block group id (GEOID) to each CoA feature
+# add census block group id (GEOID) and zipcode to each CoA address
 json/coa-addresses-with-bg-id.json: json/coa-addresses.json json/zipcodes.json json/atx-blockgroups.json
 	mkdir -p $(dir $@)
 	cat $< | \
@@ -96,7 +96,7 @@ json/coa-addresses-with-bg-id.json: json/coa-addresses.json json/zipcodes.json j
 		$(BABEL) scripts/spatial-join.js --property ZIPCODE --join $(word 2, $^) | \
 		$(BABEL) scripts/spatial-join.js --property GEOID --join $(word 3, $^) > $@
 
-# add census block group id (GEOID) to each CoA feature
+# add census block group id (GEOID) to each CoA building
 json/coa-buildings-with-bg-id.json: json/coa-buildings.json json/atx-blockgroups.json
 	mkdir -p $(dir $@)
 	cat $< | \
