@@ -124,6 +124,11 @@ json/osm-buildings-with-bg-id.json: json/osm-buildings.json json/atx-blockgroups
 		$(BABEL) scripts/uncollect-features.js | \
 		$(BABEL) scripts/spatial-join.js --property GEOID --join $(word 2, $^) > $@
 
+# export preexisting single address nodes to geojson
+json/preexisting-addresses.json: scripts/preexisting-addresses.ql
+	mkdir -p $(dir $@)
+	node_modules/query-overpass/cli.js $<  > $@
+
 # write out the census blockgroup poly to a file
 json/blockgroups/%/blockgroup.json: json/atx-blockgroups.json
 	mkdir -p $(dir $@)
@@ -218,6 +223,11 @@ osm/%.osm: json/blockgroups/%.json
 	cat $< | \
 		$(BABEL) scripts/geojson-to-osm.js > $@
 
+# convert preexisting addresses to OSM XML
+osm/preexisting-addresses.osm: json/preexisting-addresses.json
+	mkdir -p $(dir $@)
+	cat $< | \
+		$(BABEL) scripts/geojson-to-osm.js > $@
 
 # this part taken from https://github.com/mbostock/us-atlas
 # download Census Block Groups
