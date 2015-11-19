@@ -175,7 +175,7 @@ function bestMatch(address, names) {
   });
 
   const sorted = _.sortBy(_.pairs(scores), ([name, score]) => -1 * score);
-  if (sorted.length && sorted[0][1] > 1000) {
+  if (sorted.length && sorted[0][1] >= 1000) {
     if (sorted[0][1] !== sorted[1][1]) {
       return sorted[0][0];
     } else {
